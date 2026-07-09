@@ -237,6 +237,42 @@ export class WindowService {
   }
 
   /**
+   * Switches the application window layout between a floating dictation overlay and normal mode.
+   */
+  public setOverlayMode(isOverlay: boolean): void {
+    if (!this.window) return
+
+    if (isOverlay) {
+      const { screen } = require('electron')
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+
+      const overlayWidth = 240
+      const overlayHeight = 65
+      const x = Math.floor((screenWidth - overlayWidth) / 2)
+      const y = Math.floor(screenHeight - overlayHeight - 40)
+
+      this.window.setResizable(true)
+      this.window.setMinimumSize(100, 40) // lower limits temporarily
+      this.window.setBounds({ width: overlayWidth, height: overlayHeight, x, y })
+      this.window.setAlwaysOnTop(true, 'status')
+      this.window.setResizable(false)
+      logger.info('WindowService: Switched to tiny dictation overlay mode.')
+    } else {
+      this.window.setResizable(true)
+      this.window.setMinimumSize(380, 520) // restore normal limits
+      this.window.setBounds({
+        width: this.stateService.width,
+        height: this.stateService.height,
+        x: this.stateService.x,
+        y: this.stateService.y
+      })
+      this.window.setAlwaysOnTop(true)
+      logger.info('WindowService: Restored normal layout bounds.')
+    }
+  }
+
+  /**
    * Setup IPC handlers for window layout control and auto-start management.
    */
   private registerIpcHandlers(): void {
@@ -347,6 +383,11 @@ export class WindowService {
         this.window.show()
         this.window.focus()
       }
+    })
+
+    // Window set-overlay IPC handler
+    ipcMain.on('window-set-overlay', (_event, isOverlay: boolean) => {
+      this.setOverlayMode(isOverlay)
     })
 
     // Auto-update IPC handlers

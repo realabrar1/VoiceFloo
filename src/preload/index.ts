@@ -89,6 +89,7 @@ const api = {
     }
   },
   restore: (): void => ipcRenderer.send('window-restore'),
+  setOverlayMode: (isOverlay: boolean): void => ipcRenderer.send('window-set-overlay', isOverlay),
 
   // Auto-update preloads
   checkForUpdates: (manual: boolean): Promise<boolean> => ipcRenderer.invoke('update-check', manual),

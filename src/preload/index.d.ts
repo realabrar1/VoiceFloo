@@ -27,6 +27,7 @@ export interface AppAPI {
   registerGlobalShortcut: (shortcutString: string) => void
   onGlobalShortcutPress: (callback: (win: any) => void) => () => void
   restore: () => void
+  setOverlayMode: (isOverlay: boolean) => void
   checkForUpdates: (manual: boolean) => Promise<boolean>
   downloadUpdate: () => Promise<boolean>
   installAndRestartUpdate: () => void

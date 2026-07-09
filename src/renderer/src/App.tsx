@@ -68,7 +68,7 @@ function App(): React.JSX.Element {
   })
 
   // Sync state with AudioEngine
-  const [micState, setMicState] = useState<'idle' | 'recording' | 'paused' | 'error'>('idle')
+  const [micState, setMicState] = useState<'idle' | 'recording' | 'paused' | 'error' | 'processing'>('idle')
   const [liveLevel, setLiveLevel] = useState(0)
   const [duration, setDuration] = useState(0)
 
@@ -444,8 +444,13 @@ function App(): React.JSX.Element {
           setTargetWindow(win)
         }
 
-        // Minimize window to transfer focus back to target app
-        window.api.minimize()
+        // Switch to tiny floating overlay layout
+        window.api.setOverlayMode(true)
+
+        // Restore focus to the target editor application immediately
+        if (win && win.pid) {
+          window.api.injectTextInput('', false, win.pid)
+        }
 
         await audioEngine.startRecording()
         setMicState('recording')
@@ -456,11 +461,10 @@ function App(): React.JSX.Element {
         }
       } catch (err) {
         console.error('Failed to start recording session:', err)
+        window.api.setOverlayMode(false)
       }
     } else if (micState === 'recording' || micState === 'paused') {
       await handleStopRecording()
-      // Restore window state
-      window.api.restore()
     }
   }
 
@@ -484,7 +488,7 @@ function App(): React.JSX.Element {
   const handleStopRecording = async () => {
     // 1. Stop audio capture
     await audioEngine.stopRecording()
-    setMicState('idle')
+    setMicState('processing')
     setIsSpeaking(false)
     setIsVadSilenced(false)
 
@@ -504,6 +508,11 @@ function App(): React.JSX.Element {
         ...prev
       ])
     }
+
+    setMicState('idle')
+    // 4. Return to normal bounds in background and close to tray
+    window.api.setOverlayMode(false)
+    window.api.close()
   }
 
   const handleCancelRecording = () => {
@@ -512,6 +521,10 @@ function App(): React.JSX.Element {
     setMicState('idle')
     setIsSpeaking(false)
     setIsVadSilenced(false)
+
+    // Reset overlay mode and close/hide window
+    window.api.setOverlayMode(false)
+    window.api.close()
   }
 
   const handleRetryPermission = async () => {
@@ -577,11 +590,88 @@ function App(): React.JSX.Element {
               variants={containerVariants}
               initial="hidden"
               animate="visible"
-            exit="exit"
-            className="w-full h-full relative"
-          >
-            {/* Main Glass Panel Card */}
-            <GlassCard className="w-full h-full flex flex-col justify-between select-none">
+              exit="exit"
+              className="w-full h-full relative"
+            >
+              {micState === 'recording' || micState === 'paused' || micState === 'processing' ? (
+                /* 1. Tiny Floating Overlay Layout */
+                <motion.div 
+                  className="w-full h-full flex items-center justify-between bg-[#0F1422]/90 border border-white/10 rounded-2xl px-4 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl select-none"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                >
+                  {/* Left: Indicator & Timer */}
+                  <div className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${micState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
+                    <span className="text-xs font-bold text-white/80 font-mono">{formatTimer(duration)}</span>
+                  </div>
+
+                  {/* Center: Waveform/Status */}
+                  <div className="flex-1 flex items-center justify-center px-3">
+                    {micState === 'processing' ? (
+                      <span className="text-[10px] font-bold text-blue-300 tracking-wide uppercase animate-pulse flex items-center gap-1.5">
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing
+                      </span>
+                    ) : (
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 9 }).map((_, i) => {
+                          const h = 4 + liveLevel * 32 * Math.sin((i / 8) * Math.PI) * (0.6 + Math.random() * 0.4);
+                          return (
+                            <motion.div
+                              key={i}
+                              className="w-1 rounded-full bg-gradient-to-t from-blue-600 via-cyan-400 to-blue-400"
+                              animate={{ height: Math.max(4, Math.min(28, h)) }}
+                              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+                            />
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Actions */}
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleCancelRecording}
+                      className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-red-400 transition-colors cursor-pointer"
+                      title="Discard"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+
+                    {micState === 'recording' ? (
+                      <button 
+                        onClick={handlePauseRecording}
+                        className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-amber-400 transition-colors cursor-pointer"
+                        title="Pause"
+                      >
+                        <Pause className="w-3.5 h-3.5" />
+                      </button>
+                    ) : (
+                      micState === 'paused' && (
+                        <button 
+                          onClick={handleResumeRecording}
+                          className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
+                          title="Resume"
+                        >
+                          <Play className="w-3.5 h-3.5" />
+                        </button>
+                      )
+                    )}
+
+                    <button 
+                      onClick={handleStopRecording}
+                      className="p-1.5 rounded-full bg-blue-600/10 hover:bg-blue-600/25 border border-blue-500/20 text-blue-300 hover:text-white transition-all cursor-pointer"
+                      title="Finish"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                /* 2. Normal Full Panel Card Layout */
+                <GlassCard className="w-full h-full flex flex-col justify-between select-none">
               
               {/* Top title bar */}
               <TitleBar />
@@ -1354,9 +1444,11 @@ function App(): React.JSX.Element {
               />
               
             </GlassCard>
-          </motion.div>
-        ))}
-      </AnimatePresence>
+          )}
+        </motion.div>
+      )
+    )}
+  </AnimatePresence>
     </div>
   )
 }

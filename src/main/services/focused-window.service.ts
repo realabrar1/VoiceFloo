@@ -79,7 +79,7 @@ export class FocusedWindowService {
   }
 
   /**
-   * Restores focus to a background window by its Process ID.
+   * Restores focus to a background window by its Process ID using SetForegroundWindow.
    */
   public focusWindow(pid: number): Promise<boolean> {
     return new Promise((resolve) => {
@@ -89,9 +89,28 @@ export class FocusedWindowService {
       }
 
       const script = `
-        $wshell = New-Object -ComObject Wscript.Shell;
-        $success = $wshell.AppActivate(${pid});
-        ConvertTo-Json @{ success = $success }
+        $code = @'
+        using System;
+        using System.Runtime.InteropServices;
+        public class Win32Focus {
+          [DllImport("user32.dll")]
+          [return: MarshalAs(UnmanagedType.Bool)]
+          public static extern bool SetForegroundWindow(IntPtr hWnd);
+        }
+'@
+        Add-Type -TypeDefinition $code -ErrorAction SilentlyContinue
+        $proc = Get-Process -Id ${pid} -ErrorAction SilentlyContinue
+        if ($proc) {
+          $hwnd = $proc.MainWindowHandle
+          if ($hwnd -ne [IntPtr]::Zero) {
+            $success = [Win32Focus]::SetForegroundWindow($hwnd)
+            ConvertTo-Json @{ success = $success }
+          } else {
+            ConvertTo-Json @{ success = $false }
+          }
+        } else {
+          ConvertTo-Json @{ success = $false }
+        }
       `.replace(/\r?\n/g, ' ').trim()
 
       exec(`powershell -Command "${script}"`, (err, stdout) => {

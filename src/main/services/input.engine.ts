@@ -86,12 +86,22 @@ export class InputEngine {
             logger.info(`InputEngine: Pasting final text via clipboard. Size: ${insertText.length} chars.`)
             await clipboardService.pasteText(insertText)
           } else {
-            logger.info(`InputEngine: Typing final text via keys. Size: ${insertText.length} chars.`)
-            await keyboardService.typeText(insertText, this.options.typingSpeed)
+            try {
+              logger.info(`InputEngine: Typing final text via keys. Size: ${insertText.length} chars.`)
+              await keyboardService.typeText(insertText, this.options.typingSpeed)
+            } catch (err: any) {
+              logger.warn(`InputEngine: Keyboard typing failed: ${err.message}. Falling back to clipboard paste.`)
+              await clipboardService.pasteText(insertText)
+            }
           }
         } else {
           // Type new streaming words in real-time
-          await this.processStringWithCommands(insertText)
+          try {
+            await this.processStringWithCommands(insertText)
+          } catch (err: any) {
+            logger.warn(`InputEngine: Streaming keyboard typing failed: ${err.message}. Falling back to clipboard paste.`)
+            await clipboardService.pasteText(insertText)
+          }
         }
       }
     } catch (err: any) {
