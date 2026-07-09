@@ -1,14 +1,15 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Sparkles, Mail, MessageSquare } from 'lucide-react'
+import Link from 'next/link'
+import { Sparkles, Mail, MessageSquare, ArrowRight, HelpCircle } from 'lucide-react'
 
-// Custom Inline GitHub SVG Icon
+// Custom Inline GitHub SVG Icon matching Lucide style
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg
     viewBox="0 0 24 24"
-    width="16"
-    height="16"
+    width="18"
+    height="18"
     stroke="currentColor"
     strokeWidth="2"
     fill="none"
@@ -21,137 +22,135 @@ const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
 )
 
 export default function ContactPage() {
-  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [submitted, setSubmitted] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!name || !email || !message) return
+    if (!email || !message) return
     setSubmitted(true)
   }
 
   return (
-    <div className="max-w-4xl w-full mx-auto px-4 py-16 md:py-24 text-left relative z-10 space-y-12">
-      
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none -z-10" />
-
-      {/* Header */}
-      <div className="space-y-4 text-center max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/10 bg-blue-900/5 text-[9px] font-bold tracking-widest text-cyan-400 uppercase select-none">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Support Channels</span>
-        </div>
+    <div className="w-full bg-[#000000] text-[#f0f0f0] min-h-screen py-24">
+      <div className="site-container max-w-[1000px] space-y-16">
         
-        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-          Get in Touch
-        </h1>
-        
-        <p className="text-xs text-slate-400 leading-relaxed max-w-[400px] mx-auto">
-          Have bug reports, feature suggestions, or questions? Reach out to the team.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start text-xs leading-normal">
-        
-        {/* Support channels card */}
-        <div className="space-y-6">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">Community Support</h3>
-          <p className="text-slate-400">
-            VoiceFloo is maintained by open-source collaborators. You can engage with us directly through the following networks:
+        {/* Header */}
+        <div className="space-y-6 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
+            <Mail className="w-4 h-4 text-[#9281f7]" />
+            <span>Support channels</span>
+          </div>
+          
+          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+            Connect
+          </h1>
+          
+          <p className="text-[16px] text-[#a1a4a5] leading-relaxed max-w-md mx-auto">
+            Get technical assistance, submit bug reports, or join our community developers.
           </p>
+        </div>
 
-          <div className="space-y-4 pt-2">
-            <a 
-              href="https://github.com/voicefloo-org/VoiceFloo/issues" 
-              target="_blank"
-              rel="noreferrer"
-              className="p-3.5 rounded-xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.03] transition-colors flex items-center gap-3.5"
-            >
-              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-white">
-                <GithubIcon className="w-4.5 h-4.5" />
+        {/* Layout Split Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
+          
+          {/* Left Column: Email Support Form */}
+          <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-6">
+            <h3 className="text-[20px] font-medium text-white tracking-tight">
+              Email Support
+            </h3>
+            
+            {submitted ? (
+              <div className="p-6 rounded border border-[#3ad389]/20 bg-[#000000] text-center space-y-3 font-mono text-[13px]">
+                <span className="status-dot status-dot-delivered" />
+                <p className="text-white font-medium">Message Dispatched</p>
+                <p className="text-[#a1a4a5]">We will review your support tickets inside 24 hours.</p>
               </div>
-              <div className="text-left">
-                <h4 className="font-bold text-white">GitHub Issues</h4>
-                <p className="text-[10px] text-slate-500">Report errors or query developer tasks</p>
-              </div>
-            </a>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[12px] font-mono text-[#a1a4a5] uppercase tracking-wider block">Email Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="name@example.com"
+                    className="w-full bg-[#000000] border border-[#292d30] hover:border-[#a1a4a5] focus:border-[#9281f7] text-[#f0f0f0] rounded px-4 py-3 text-[14px] outline-none transition-colors font-sans"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <label className="text-[12px] font-mono text-[#a1a4a5] uppercase tracking-wider block">Message Details</label>
+                  <textarea
+                    required
+                    rows={4}
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    placeholder="Detail your question or bug context..."
+                    className="w-full bg-[#000000] border border-[#292d30] hover:border-[#a1a4a5] focus:border-[#9281f7] text-[#f0f0f0] rounded px-4 py-3 text-[14px] outline-none transition-colors resize-none font-sans"
+                  />
+                </div>
 
-            <div className="p-3.5 rounded-xl border border-white/5 bg-white/[0.01] flex items-center gap-3.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-cyan-400">
-                <Mail className="w-4 h-4" />
+                <button
+                  type="submit"
+                  className="btn-primary w-full py-3.5"
+                  style={{ backgroundColor: '#3b9eff' }}
+                >
+                  <span>Submit Support Ticket</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </form>
+            )}
+          </div>
+
+          {/* Right Column: GitHub & Community Integrations */}
+          <div className="space-y-8 text-left">
+            {/* GitHub Issues */}
+            <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-4">
+              <div className="w-10 h-10 rounded bg-[#000000] border border-[#292d30] flex items-center justify-center text-white">
+                <GithubIcon className="w-5 h-5" />
               </div>
-              <div className="text-left">
-                <h4 className="font-bold text-white">Support Email</h4>
-                <p className="text-[10px] text-slate-500">support@voicefloo.com</p>
+              <h4 className="text-[18px] font-medium text-white tracking-tight">Bug Reports & Issues</h4>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                Found a bug with audio buffers or keypress simulations? Submit structured issues directly on our repository.
+              </p>
+              <a
+                href="https://github.com/realabrar1/VoiceFloo/issues"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[13px] font-mono text-[#9281f7] hover:text-[#baa7ff] transition-colors uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <span>Open GitHub Issues</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+
+            {/* Discord Community */}
+            <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-4">
+              <div className="w-10 h-10 rounded bg-[#000000] border border-[#292d30] flex items-center justify-center text-white">
+                <MessageSquare className="w-5 h-5" />
               </div>
+              <h4 className="text-[18px] font-medium text-white tracking-tight">Developer Community</h4>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                Join our Discord community to discuss model weights optimization, customization tips, and release schedules.
+              </p>
+              <a
+                href="https://discord.gg/voicefloo"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[13px] font-mono text-[#9281f7] hover:text-[#baa7ff] transition-colors uppercase tracking-wider flex items-center gap-1.5"
+              >
+                <span>Join Discord Group</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </a>
             </div>
           </div>
-        </div>
 
-        {/* Contact Form card */}
-        <div className="p-6 md:p-8 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-3xl shadow-xl">
-          {submitted ? (
-            <div className="text-center py-8 space-y-4">
-              <div className="w-12 h-12 rounded-full bg-emerald-500/10 border border-emerald-500/35 flex items-center justify-center mx-auto text-emerald-400">
-                <MessageSquare className="w-6 h-6" />
-              </div>
-              <h3 className="text-sm font-bold text-white">Message Transmitted!</h3>
-              <p className="text-[10px] text-slate-400 max-w-[200px] mx-auto leading-relaxed">
-                Thank you. We will check your message and follow up shortly.
-              </p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Name</label>
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50"
-                  placeholder="Your Name"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Email Address</label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50"
-                  placeholder="you@example.com"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Message</label>
-                <textarea
-                  required
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full h-24 bg-white/5 border border-white/10 rounded-lg p-3 text-xs text-white placeholder-white/20 focus:outline-none resize-none"
-                  placeholder="How can we help?"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer shadow-md shadow-blue-900/30 text-center uppercase tracking-wider"
-              >
-                Send Message
-              </button>
-            </form>
-          )}
         </div>
 
       </div>
-
     </div>
   )
 }

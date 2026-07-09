@@ -1,134 +1,193 @@
-import React from 'react'
-import { Sparkles, Command, Shield, Mic, CheckCircle } from 'lucide-react'
+'use client'
+
+import React, { useState } from 'react'
+import { Sparkles, Command, Shield, Mic, CheckCircle2, ChevronRight, Terminal, BookOpen, ExternalLink, HelpCircle } from 'lucide-react'
+
+// Syntax highlighted code component using Commit Mono
+const CodeBlock = ({ code, language }: { code: string; language: string }) => {
+  return (
+    <div className="rounded-lg border border-[#292d30] bg-[#000000] overflow-hidden text-left font-commit text-[13px] shadow-sm my-4">
+      <div className="flex items-center justify-between px-4 py-2 bg-[#000000] border-b border-[#292d30] select-none text-[#a1a4a5] text-[11px] uppercase tracking-wider">
+        <span>{language}</span>
+        <Terminal className="w-3.5 h-3.5" />
+      </div>
+      <pre className="p-4 overflow-x-auto text-[#f0f0f0] leading-relaxed">
+        <code>{code}</code>
+      </pre>
+    </div>
+  )
+}
 
 export default function DocsPage() {
+  const [activeChapter, setActiveChapter] = useState('getting-started')
+
+  const chapters = [
+    { id: 'getting-started', label: '1. Getting Started' },
+    { id: 'installation', label: '2. Installation Guide' },
+    { id: 'shortcuts', label: '3. Keyboard Shortcuts' },
+    { id: 'models', label: '4. Local Whisper Models' },
+    { id: 'faq', label: '5. Technical FAQ' },
+    { id: 'troubleshooting', label: '6. Troubleshooting' }
+  ]
+
+  const sampleJsonConfig = `{
+  "model": "ggml-base.bin",
+  "hotkey": "Alt+Space",
+  "vad_threshold": 0.5,
+  "threads": 4,
+  "language": "en"
+}`
+
   return (
-    <div className="max-w-4xl w-full mx-auto px-4 py-16 md:py-24 text-left relative z-10 space-y-12">
-      
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none -z-10" />
-
-      {/* Header */}
-      <div className="space-y-4 text-center max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/10 bg-blue-900/5 text-[9px] font-bold tracking-widest text-cyan-400 uppercase select-none">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Documentation</span>
-        </div>
+    <div className="w-full bg-[#000000] text-[#f0f0f0] min-h-screen py-24">
+      <div className="site-container max-w-[1200px] space-y-16">
         
-        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-          VoiceFloo User Guide
-        </h1>
-        
-        <p className="text-xs text-slate-400 leading-relaxed max-w-[400px] mx-auto">
-          Learn how to customize shortcuts, grant permissions, and use voice commands.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start select-text text-xs">
-        
-        {/* Sidebar Navigation */}
-        <div className="p-5 rounded-2xl border border-white/5 bg-[#050710]/40 space-y-4 select-none">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-2">Chapters</h3>
-          <nav className="flex flex-col gap-2.5 font-bold text-slate-400">
-            <a href="#getting-started" className="hover:text-cyan-400 transition-colors">1. Getting Started</a>
-            <a href="#window-controls" className="hover:text-cyan-400 transition-colors">2. Window Management</a>
-            <a href="#insertion-strategies" className="hover:text-cyan-400 transition-colors">3. Input Strategies</a>
-            <a href="#voice-commands" className="hover:text-cyan-400 transition-colors">4. Voice Shortcuts</a>
-            <a href="#privacy" className="hover:text-cyan-400 transition-colors">5. Security & Privacy</a>
-          </nav>
-        </div>
-
-        {/* Core documentation text */}
-        <div className="md:col-span-2 space-y-12">
+        {/* Header */}
+        <div className="space-y-6 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
+            <BookOpen className="w-4 h-4 text-[#9281f7]" />
+            <span>Developer Reference</span>
+          </div>
           
-          {/* Chapter 1: Getting Started */}
-          <section id="getting-started" className="space-y-4">
-            <h2 className="text-md font-bold text-white border-b border-white/5 pb-2 uppercase tracking-wide">
-              1. Getting Started
-            </h2>
-            <p className="text-slate-400 leading-relaxed">
-              When launching VoiceFloo for the first time, you will see a setup wizard overlay. Follow the instructions to download the speech model, select your language preference, and verify your microphone level peaks.
-            </p>
-            <div className="p-4 rounded-xl border border-white/5 bg-white/[0.01] space-y-2">
-              <h4 className="font-bold text-white">Default Hotkey Shortcut:</h4>
-              <p className="text-slate-400">
-                Press <kbd className="px-1.5 py-0.5 rounded bg-white/10 text-white/60 font-mono text-[10px] border border-white/5">Ctrl + Shift + Space</kbd> to launch the recorder instantly from any background window.
-              </p>
-            </div>
-          </section>
+          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+            Documentation
+          </h1>
+          
+          <p className="text-[16px] text-[#a1a4a5] leading-relaxed max-w-md mx-auto">
+            Everything you need to set up, customize shortcuts, and optimize VoiceFloo offline models.
+          </p>
+        </div>
 
-          {/* Chapter 2: Window Controls */}
-          <section id="window-controls" className="space-y-4">
-            <h2 className="text-md font-bold text-white border-b border-white/5 pb-2 uppercase tracking-wide">
-              2. Window Management
-            </h2>
-            <p className="text-slate-400 leading-relaxed">
-              VoiceFloo operates in a borderless Liquid Glass visual tray. The card stays on top of other applications, rounding borders, and hiding from Windows taskbars when minimized to stay accessible without getting in your way.
-            </p>
-          </section>
+        {/* Core Layout Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 items-start">
+          
+          {/* Sticky Sidebar Chapter Navigator */}
+          <div className="md:col-span-1 space-y-6 sticky top-24 select-none">
+            <h3 className="text-[12px] font-mono text-[#6e727a] uppercase tracking-widest border-b border-[#292d30] pb-2">
+              Chapters
+            </h3>
+            <nav className="flex flex-col gap-3 font-mono text-[13px]">
+              {chapters.map((chapter) => (
+                <a
+                  key={chapter.id}
+                  href={`#${chapter.id}`}
+                  onClick={() => setActiveChapter(chapter.id)}
+                  className={`transition-colors hover:text-[#9281f7] text-left ${activeChapter === chapter.id ? 'text-[#9281f7] font-medium' : 'text-[#a1a4a5]'}`}
+                >
+                  {chapter.label}
+                </a>
+              ))}
+            </nav>
+          </div>
 
-          {/* Chapter 3: Insertion Strategies */}
-          <section id="insertion-strategies" className="space-y-4">
-            <h2 className="text-md font-bold text-white border-b border-white/5 pb-2 uppercase tracking-wide">
-              3. Input Strategies
-            </h2>
-            <p className="text-slate-400 leading-relaxed">
-              VoiceFloo features two distinct text-insertion strategies configured inside the settings menu:
-            </p>
-            <ul className="space-y-3 pl-4">
-              <li className="list-disc leading-relaxed text-slate-350">
-                <strong>Keyboard Emulation (Live Streaming)</strong>: Simulates keyboard events to type text word-by-word into text fields as you speak, providing real-time feedback.
-              </li>
-              <li className="list-disc leading-relaxed text-slate-350">
-                <strong>Clipboard Copy-Paste (Instant flushes)</strong>: Overwrites the text field instantly when recording stops, backing up and restoring your original clipboard payloads.
-              </li>
-            </ul>
-          </section>
-
-          {/* Chapter 4: Voice Shortcuts */}
-          <section id="voice-commands" className="space-y-4">
-            <h2 className="text-md font-bold text-white border-b border-white/5 pb-2 uppercase tracking-wide">
-              4. Voice Shortcuts
-            </h2>
-            <p className="text-slate-400 leading-relaxed">
-              When Voice Commands are enabled in settings, speaking the following phrases executes standard editing shortcuts rather than printing literal characters:
-            </p>
+          {/* Core documentation text */}
+          <div className="md:col-span-3 space-y-16 select-text text-left">
             
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-[11px] border-collapse">
-                <thead>
-                  <tr className="border-b border-white/10 text-white/50 uppercase tracking-wider">
-                    <th className="py-2.5 font-bold">Verbal Phrase</th>
-                    <th className="py-2.5 font-bold">Emulated Keypress Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 text-slate-300 font-medium">
-                  <tr><td className="py-2.5">"new line"</td><td className="py-2.5">Presses Enter</td></tr>
-                  <tr><td className="py-2.5">"new paragraph"</td><td className="py-2.5">Presses Enter twice</td></tr>
-                  <tr><td className="py-2.5">"tab key"</td><td className="py-2.5">Presses Tab</td></tr>
-                  <tr><td className="py-2.5">"delete last word"</td><td className="py-2.5">Presses Ctrl + Backspace</td></tr>
-                  <tr><td className="py-2.5">"undo last action"</td><td className="py-2.5">Presses Ctrl + Z</td></tr>
-                  <tr><td className="py-2.5">"redo last action"</td><td className="py-2.5">Presses Ctrl + Y</td></tr>
-                  <tr><td className="py-2.5">"select all"</td><td className="py-2.5">Presses Ctrl + A</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </section>
+            {/* Getting Started */}
+            <section id="getting-started" className="space-y-6">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                1. Getting Started
+              </h2>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                VoiceFloo is a native Windows desktop utility that intercepts sound card buffers, translates speech to text completely offline using local weights, and injects transcription strokes natively at the cursor coordinates.
+              </p>
+              <div className="p-6 rounded-xl border border-[#292d30] bg-[#000000] space-y-3">
+                <h4 className="text-[14px] font-medium text-white flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#9281f7]" /> Quick Trigger Hotkey
+                </h4>
+                <p className="text-[13px] text-[#a1a4a5] leading-relaxed">
+                  Hold <kbd className="px-2 py-0.5 rounded bg-[#000000] border border-[#292d30] font-mono text-white text-[12px]">Alt + Space</kbd> globally inside any window to start recording. Release the keys to finish dictating.
+                </p>
+              </div>
+            </section>
 
-          {/* Chapter 5: Security & Privacy */}
-          <section id="privacy" className="space-y-4 pb-12">
-            <h2 className="text-md font-bold text-white border-b border-white/5 pb-2 uppercase tracking-wide">
-              5. Security & Privacy
-            </h2>
-            <p className="text-slate-400 leading-relaxed">
-              VoiceFloo runs completely offline on your device. Local transcription means zero telemetry streams, zero cloud servers, and zero audio storage outside the user's workspace directories.
-            </p>
-          </section>
+            {/* Installation */}
+            <section id="installation" className="space-y-6">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                2. Installation Guide
+              </h2>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                Execute the native Windows installer Setup EXE. The utility bundles the whisper C++ BLAS runtime dlls inside programmatic local folders.
+              </p>
+              <CodeBlock 
+                code="msiexec /i VoiceFlooSetup.msi /qn" 
+                language="powershell installer command" 
+              />
+            </section>
 
+            {/* Keyboard Shortcuts */}
+            <section id="shortcuts" className="space-y-6">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                3. Keyboard Shortcuts
+              </h2>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                VoiceFloo supports macro replacements of spoken phrases to inject control keystrokes instead of literal text strings. See default bindings below:
+              </p>
+              
+              <div className="overflow-x-auto border border-[#292d30] rounded-lg bg-[#000000] font-mono text-[12px] select-text">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#292d30] text-[#a1a4a5] uppercase tracking-wider bg-[#000000]">
+                      <th className="p-4 font-medium">Verbal Command</th>
+                      <th className="p-4 font-medium">Emulated Keypress</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#292d30] text-[#f0f0f0]">
+                    <tr><td className="p-4">&quot;new line&quot;</td><td className="p-4">Presses Enter</td></tr>
+                    <tr><td className="p-4">&quot;new paragraph&quot;</td><td className="p-4">Presses Enter twice</td></tr>
+                    <tr><td className="p-4">&quot;tab key&quot;</td><td className="p-4">Presses Tab</td></tr>
+                    <tr><td className="p-4">&quot;delete word&quot;</td><td className="p-4">Presses Ctrl + Backspace</td></tr>
+                    <tr><td className="p-4">&quot;undo command&quot;</td><td className="p-4">Presses Ctrl + Z</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Local Whisper Models */}
+            <section id="models" className="space-y-6">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                4. Local Whisper Models
+              </h2>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                Settings are configured inside the application JSON configuration model, stored within system appdata.
+              </p>
+              <CodeBlock 
+                code={sampleJsonConfig} 
+                language="config/config.json" 
+              />
+            </section>
+
+            {/* FAQ */}
+            <section id="faq" className="space-y-6">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                5. Technical FAQ
+              </h2>
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-[15px] font-medium text-white mb-1">Does this require GPU acceleration?</h4>
+                  <p className="text-[14px] text-[#a1a4a5] leading-relaxed">No. The BLAS CPU multi-threading library maps weight layers directly to CPU threads.</p>
+                </div>
+                <div>
+                  <h4 className="text-[15px] font-medium text-white mb-1">Where are speech models stored?</h4>
+                  <p className="text-[14px] text-[#a1a4a5] leading-relaxed">Models are stored in your user profile appdata at <code className="text-[#9281f7] font-mono">%APPDATA%\VoiceFloo\models</code>.</p>
+                </div>
+              </div>
+            </section>
+
+            {/* Troubleshooting */}
+            <section id="troubleshooting" className="space-y-6 pb-12">
+              <h2 className="text-[24px] font-medium text-white tracking-tight border-b border-[#292d30] pb-3">
+                6. Troubleshooting
+              </h2>
+              <p className="text-[14px] text-[#a1a4a5] leading-relaxed">
+                If keystroke injection fails inside administrator windows (like cmd.exe), ensure the utility has been launched with appropriate user access elevations or configure clipboard fallback pasting modes.
+              </p>
+            </section>
+
+          </div>
         </div>
 
       </div>
-
     </div>
   )
 }

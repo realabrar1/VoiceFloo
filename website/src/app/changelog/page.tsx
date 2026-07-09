@@ -8,107 +8,128 @@ export default async function ChangelogPage() {
   const releases = await fetchAllReleases()
 
   return (
-    <div className="max-w-3xl w-full mx-auto px-4 py-16 md:py-24 relative z-10 text-left">
-      
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none -z-10" />
-
-      {/* Header */}
-      <div className="space-y-4 mb-16 text-center max-w-2xl mx-auto">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/10 bg-blue-900/5 text-[9px] font-bold tracking-widest text-cyan-400 uppercase select-none">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Product Updates</span>
+    <div className="w-full bg-[#000000] text-[#f0f0f0] min-h-screen py-24">
+      <div className="site-container max-w-[800px] space-y-16">
+        
+        {/* Header */}
+        <div className="space-y-6 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
+            <Sparkles className="w-4 h-4 text-[#9281f7]" />
+            <span>Changelog timeline</span>
+          </div>
+          
+          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+            What&apos;s New
+          </h1>
+          
+          <p className="text-[16px] text-[#a1a4a5] leading-relaxed max-w-md mx-auto">
+            Follow the latest releases, feature updates, and optimization changes.
+          </p>
         </div>
-        
-        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-          What's New in VoiceFloo
-        </h1>
-        
-        <p className="text-xs text-slate-400 leading-relaxed max-w-[400px] mx-auto">
-          Track updates, changes, and release cycles from the VoiceFloo release pipeline.
-        </p>
-      </div>
 
-      {/* Releases list */}
-      <div className="relative border-l border-white/5 pl-6 md:pl-8 space-y-12">
-        {releases.map((release, idx) => (
-          <div key={idx} className="relative group">
-            
-            {/* Timeline bullet indicator */}
-            <div className="absolute -left-[31px] md:-left-[39px] top-1.5 w-4 h-4 rounded-full border-2 border-[#080C19] bg-slate-800 flex items-center justify-center text-white/50 group-hover:bg-blue-500 group-hover:scale-110 transition-all duration-200">
-              <div className="w-1.5 h-1.5 rounded-full bg-[#080C19]" />
-            </div>
+        {/* Timeline list */}
+        <div className="relative border-l border-[#292d30] pl-8 space-y-12">
+          {releases.map((release, idx) => (
+            <div key={idx} className="relative group">
+              
+              {/* Timeline bullet indicator */}
+              <div className="absolute -left-[41px] top-1.5 w-4 h-4 rounded-full border-2 border-[#000000] bg-[#292d30] group-hover:bg-[#9281f7] transition-colors" />
 
-            {/* Version title and date */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5 mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-md font-bold text-white leading-none">
-                  v{release.version}
-                </h3>
-                {idx === 0 && (
-                  <span className="text-[8px] font-bold tracking-widest uppercase bg-blue-500/15 border border-blue-500/30 text-cyan-400 px-2 py-0.5 rounded-full">
-                    Latest
-                  </span>
+              {/* Version title and date */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-3">
+                  <h3 className="text-[20px] font-medium text-white tracking-tight">
+                    v{release.version}
+                  </h3>
+                  {idx === 0 && (
+                    <span className="text-[10px] font-mono font-bold bg-[#9281f7]/10 border border-[#9281f7]/25 text-[#9281f7] px-2.5 py-0.5 rounded">
+                      LATEST
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-1.5 text-[12px] font-mono text-[#a1a4a5]">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{release.releaseDate}</span>
+                </div>
+              </div>
+
+              {/* Release notes card */}
+              <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-4 hover:border-[#a1a4a5] transition-colors">
+                <div className="text-[14px] text-[#f0f0f0] leading-relaxed space-y-4 select-text font-sans">
+                  {release.changelogNotes.split('\n').map((line, lIdx) => {
+                    const trimmed = line.trim()
+                    if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
+                      // Check if it's a sub-badge like NEW/FIXED/IMPROVED
+                      const cleanedLine = trimmed.replace(/^[-*]\s+/, '')
+                      let badge = ''
+                      let displayLine = cleanedLine
+
+                      if (cleanedLine.toUpperCase().startsWith('[NEW]')) {
+                        badge = 'NEW'
+                        displayLine = cleanedLine.slice(5).trim()
+                      } else if (cleanedLine.toUpperCase().startsWith('[FIXED]')) {
+                        badge = 'FIXED'
+                        displayLine = cleanedLine.slice(7).trim()
+                      } else if (cleanedLine.toUpperCase().startsWith('[IMPROVED]')) {
+                        badge = 'IMPROVED'
+                        displayLine = cleanedLine.slice(10).trim()
+                      }
+
+                      return (
+                        <div key={lIdx} className="flex items-start gap-3 text-[#a1a4a5] text-[13px] leading-relaxed">
+                          {badge ? (
+                            <span className="font-mono text-[10px] font-semibold bg-[#292d30] text-[#f0f0f0] px-1.5 py-0.5 rounded border border-[#292d30] shrink-0 mt-0.5">
+                              {badge}
+                            </span>
+                          ) : (
+                            <span className="text-[#9281f7] font-mono select-none mt-0.5">•</span>
+                          )}
+                          <span>{displayLine}</span>
+                        </div>
+                      )
+                    }
+                    if (trimmed.startsWith('###')) {
+                      return (
+                        <h4 key={lIdx} className="text-[13px] font-mono font-medium text-[#9281f7] uppercase tracking-wider mt-6 pt-4 border-t border-[#292d30] first:mt-0 first:pt-0 first:border-0">
+                          {trimmed.replace(/^###\s+/, '')}
+                        </h4>
+                      )
+                    }
+                    if (trimmed.length === 0) return null
+                    return <p key={lIdx} className="text-[#a1a4a5] text-[13.5px] leading-relaxed">{trimmed}</p>
+                  })}
+                </div>
+
+                {release.installerUrl && (
+                  <div className="pt-6 border-t border-[#292d30] flex items-center justify-between text-[12px] font-mono">
+                    <span className="text-[#6e727a]">File size: {release.fileSize}</span>
+                    <a
+                      href={release.installerUrl}
+                      className="text-[#9281f7] hover:text-[#baa7ff] transition-colors uppercase tracking-wider flex items-center gap-1.5"
+                    >
+                      <span>Download setup binary</span>
+                      <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                    </a>
+                  </div>
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-slate-500 font-semibold font-mono">
-                <Clock className="w-3.5 h-3.5" />
-                <span>{release.releaseDate}</span>
-              </div>
+
             </div>
+          ))}
+        </div>
 
-            {/* Release notes block */}
-            <div className="p-5 md:p-6 rounded-2xl border border-white/5 bg-white/[0.01] hover:bg-white/[0.02] transition-colors relative select-text text-xs leading-relaxed text-slate-300 space-y-4">
-              {/* Parse notes split by newlines for clean paragraph renders */}
-              {release.changelogNotes.split('\n').map((line, lIdx) => {
-                const trimmed = line.trim()
-                if (trimmed.startsWith('-') || trimmed.startsWith('*')) {
-                  return (
-                    <li key={lIdx} className="list-disc ml-4 text-slate-350">
-                      {trimmed.replace(/^[-*]\s+/, '')}
-                    </li>
-                  )
-                }
-                if (trimmed.startsWith('###')) {
-                  return (
-                    <h4 key={lIdx} className="text-xs font-bold text-white mt-4 border-b border-white/5 pb-1 uppercase tracking-wider">
-                      {trimmed.replace(/^###\s+/, '')}
-                    </h4>
-                  )
-                }
-                if (trimmed.length === 0) return null
-                return <p key={lIdx}>{trimmed}</p>
-              })}
+        {/* Back navigation */}
+        <div className="text-center pt-8">
+          <Link
+            href="/"
+            className="text-[13px] font-mono text-[#a1a4a5] hover:text-white transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Home</span>
+          </Link>
+        </div>
 
-              {/* Install download action target */}
-              {release.installerUrl && (
-                <div className="pt-3.5 border-t border-white/5 mt-4 flex items-center justify-between gap-4">
-                  <span className="text-[9px] font-mono text-slate-500 font-bold uppercase">Size: {release.fileSize}</span>
-                  <a
-                    href={release.installerUrl}
-                    className="text-[9px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-                  >
-                    <span>Download Setup Binary</span>
-                    <ArrowLeft className="w-3 h-3 rotate-180" />
-                  </a>
-                </div>
-              )}
-            </div>
-
-          </div>
-        ))}
       </div>
-
-      <div className="text-center pt-16">
-        <Link
-          href="/"
-          className="text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1.5 uppercase tracking-wider cursor-pointer"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          <span>Back to Home</span>
-        </Link>
-      </div>
-
     </div>
   )
 }

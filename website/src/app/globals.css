@@ -1,12 +1,87 @@
 @import "tailwindcss";
 
 :root {
-  --color-background: #050816;
-  --color-foreground: #F1F5F9;
-  --color-card: rgba(11, 18, 35, 0.45);
-  --color-border: rgba(255, 255, 255, 0.1);
-  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), monospace;
+  /* Colors */
+  --color-void-black: #000000;
+  --color-graphite-hairline: #292d30;
+  --color-white: #ffffff;
+  --color-bone-white: #f0f0f0;
+  --color-ash-gray: #a1a4a5;
+  --color-smoke-gray: #abafb4;
+  --color-iron: #6e727a;
+  --color-charcoal: #464a4d;
+  --color-iris-violet: #9281f7;
+  --color-iris-violet-glow: #baa7ff;
+  --color-signal-blue: #3b9eff;
+  --color-sky-blue: #70b8ff;
+  --color-pulse-green: #3ad389;
+  --color-alarm-red: #ff9592;
+  --color-crimson: #ff6465;
+  --color-amber: #ffca16;
+  --color-amber-glow: #ffd60a;
+  --color-surface-gradient: #0b0e14;
+
+  /* Typography — Font Families */
+  --font-inter: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-domaine: 'Playfair Display', 'Georgia', serif;
+  --font-abc-favorit: 'Inter Display', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-commit-mono: 'Commit Mono', 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+
+  /* Typography — Scale */
+  --text-caption: 12px;
+  --leading-caption: 1.33;
+  --text-body-sm: 14px;
+  --leading-body-sm: 1.43;
+  --text-body: 16px;
+  --leading-body: 1.5;
+  --text-subheading: 20px;
+  --leading-subheading: 1;
+  --text-heading-sm: 24px;
+  --leading-heading-sm: 1.5;
+  --text-heading: 56px;
+  --leading-heading: 1.2;
+  --tracking-heading: -0.05em;
+  --text-heading-lg: 77px;
+  --leading-heading-lg: 1;
+  --tracking-heading-lg: -0.01em;
+  --text-display: 96px;
+  --leading-display: 1;
+  --tracking-display: -0.01em;
+
+  /* Spacing */
+  --spacing-unit: 4px;
+  --spacing-4: 4px;
+  --spacing-8: 8px;
+  --spacing-12: 12px;
+  --spacing-16: 16px;
+  --spacing-20: 20px;
+  --spacing-24: 24px;
+  --spacing-28: 28px;
+  --spacing-32: 32px;
+  --spacing-40: 40px;
+  --spacing-48: 48px;
+  --spacing-64: 64px;
+  --spacing-80: 80px;
+  --spacing-96: 96px;
+  --spacing-104: 104px;
+  --spacing-144: 144px;
+
+  /* Layout */
+  --page-max-width: 1200px;
+  --section-gap: 96px;
+  --card-padding: 32px;
+  --element-gap: 16px;
+
+  /* Border Radius */
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-2xl: 16px;
+  --radius-3xl: 24px;
+
+  /* Shadows */
+  --shadow-subtle: rgba(176, 199, 217, 0.145) 0px 0px 0px 1px;
+  --shadow-subtle-2: rgb(0, 0, 0) 0px 0px 0px 8px;
+  --shadow-subtle-3: rgba(0, 0, 0, 0.1) 0px 1px 3px 0px, rgba(0, 0, 0, 0.1) 0px 1px 2px -1px;
 }
 
 * {
@@ -16,38 +91,122 @@
 }
 
 html, body {
-  background: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans);
+  background: var(--color-void-black) !important;
+  color: var(--color-bone-white);
+  font-family: var(--font-inter);
   scroll-behavior: smooth;
   overflow-x: hidden;
 }
 
-.noise-bg {
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
+/* Site Container Grid */
+.site-container {
+  width: 100%;
+  max-width: var(--page-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--spacing-24);
+  padding-right: var(--spacing-24);
+}
+@media (min-width: 768px) {
+  .site-container {
+    padding-left: var(--spacing-48);
+    padding-right: var(--spacing-48);
+  }
 }
 
-.text-gradient {
-  background: linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #3b82f6 100%);
+/* Font helpers */
+.font-domaine {
+  font-family: var(--font-domaine);
+  letter-spacing: -0.01em;
+}
+
+.font-abc {
+  font-family: var(--font-abc-favorit);
+}
+
+.font-commit {
+  font-family: var(--font-commit-mono);
+}
+
+/* Ghost on Black button */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--color-graphite-hairline);
+  color: var(--color-white);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  transition: border-color 0.15s ease-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.btn-ghost:hover {
+  border-color: var(--color-white);
+}
+
+/* Filled Primary Action button */
+.btn-primary {
+  background-color: var(--color-signal-blue);
+  color: var(--color-white);
+  border-radius: 6px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-family: var(--font-inter);
+  font-weight: 500;
+  transition: opacity 0.15s ease-out;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-decoration: none;
+}
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Section Card */
+.resend-card {
+  background-color: var(--color-void-black);
+  border: 1px solid var(--color-graphite-hairline);
+  border-radius: 16px;
+  padding: 32px;
+  transition: border-color 0.15s ease-out;
+}
+.resend-card:hover {
+  border-color: var(--color-ash-gray);
+}
+
+/* Status Indicator Dot */
+.status-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  display: inline-block;
+}
+
+.status-dot-delivered { background-color: var(--color-pulse-green); }
+.status-dot-opened { background-color: var(--color-sky-blue); }
+.status-dot-clicked { background-color: var(--color-iris-violet-glow); }
+.status-dot-bounced { background-color: var(--color-alarm-red); }
+.status-dot-complained { background-color: var(--color-amber); }
+
+/* Custom text gradients or glow */
+.text-gradient-violet {
+  background: var(--gradient-iris-violet);
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-.text-glow {
-  text-shadow: 0 0 20px rgba(59, 130, 246, 0.35);
-}
-
-.glow-cyan {
-  box-shadow: 0 0 50px -10px rgba(34, 211, 238, 0.15);
-}
-
-.glow-blue {
-  box-shadow: 0 0 50px -10px rgba(59, 130, 246, 0.15);
-}
-
-.glow-purple {
-  box-shadow: 0 0 50px -10px rgba(139, 92, 246, 0.15);
+.noise-bg {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.02'/%3E%3C/svg%3E");
 }
 
 @keyframes marquee {
@@ -61,31 +220,13 @@ html, body {
   animation: marquee 25s linear infinite;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-12px) rotate(0.5deg); }
+.text-violet-neon {
+  color: var(--color-iris-violet);
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+.border-graphite {
+  border-color: var(--color-graphite-hairline);
 }
 
-@keyframes pulse-glow {
-  0%, 100% { opacity: 0.25; transform: scale(1); }
-  50% { opacity: 0.55; transform: scale(1.05); }
-}
 
-.animate-pulse-glow {
-  animation: pulse-glow 8s ease-in-out infinite;
-}
-
-.premium-glass {
-  background: rgba(255, 255, 255, 0.02);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 
-    0 4px 30px rgba(0, 0, 0, 0.4),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
-}
 

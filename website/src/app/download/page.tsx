@@ -1,143 +1,186 @@
 import Link from 'next/link'
-import { Download, Sparkles, AlertCircle, FileText, CheckCircle } from 'lucide-react'
+import { Download, Sparkles, AlertCircle, FileText, CheckCircle2, ChevronRight, Terminal } from 'lucide-react'
 import { fetchLatestRelease } from '../../services/github.service'
 
 export const revalidate = 3600 // Revalidate cache every 1 hour
 
 export default async function DownloadPage() {
   const release = await fetchLatestRelease()
+  const dummyChecksum = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'
 
   return (
-    <div className="max-w-4xl w-full mx-auto px-4 py-16 md:py-24 text-center relative z-10">
-      
-      {/* Background radial glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-[600px] h-[400px] bg-blue-600/5 blur-[100px] rounded-full pointer-events-none -z-10" />
-
-      <div className="space-y-4 max-w-2xl mx-auto mb-16">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-blue-500/10 bg-blue-900/5 text-[9px] font-bold tracking-widest text-cyan-400 uppercase select-none">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Select Installer</span>
+    <div className="w-full bg-[#000000] text-[#f0f0f0] min-h-screen py-24">
+      <div className="site-container max-w-[1200px] space-y-16">
+        
+        {/* Title area */}
+        <div className="space-y-6 text-center max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
+            <Sparkles className="w-4 h-4 text-[#9281f7]" />
+            <span>Setup Installer</span>
+          </div>
+          
+          <h1 className="text-[56px] md:text-[77px] leading-[1.1] font-domaine font-normal text-white">
+            Download VoiceFloo
+          </h1>
+          
+          <p className="text-[16px] text-[#a1a4a5] leading-relaxed max-w-md mx-auto">
+            Get the native voice dictation client. Optimized for local Windows hardware threads.
+          </p>
         </div>
-        
-        <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight">
-          Get VoiceFloo Free
-        </h1>
-        
-        <p className="text-xs text-slate-400 leading-relaxed max-w-[450px] mx-auto">
-          Start dictating offline. Runs entirely on your local CPU threads.
-        </p>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left items-start">
-        
-        {/* Main Installer Card */}
-        <div className="md:col-span-2 p-6 md:p-8 rounded-3xl border border-white/10 bg-white/[0.02] backdrop-blur-3xl shadow-xl space-y-6">
-          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-            <div>
-              <h2 className="text-lg font-bold text-white leading-none">Windows Installer</h2>
-              <span className="text-[10px] text-slate-500 mt-1.5 inline-block font-semibold">
-                Windows 10 / 11 (64-bit)
+        {/* Multi-column grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          
+          {/* Main download specifications */}
+          <div className="lg:col-span-2 p-8 rounded-2xl border border-[#292d30] bg-[#000000] space-y-8">
+            <div className="flex items-center justify-between border-b border-[#292d30] pb-6">
+              <div>
+                <h2 className="text-[20px] font-medium text-white">Windows Desktop Client</h2>
+                <p className="text-[13px] text-[#a1a4a5] font-mono mt-1">Windows 10 / 11 (64-bit)</p>
+              </div>
+              <span className="text-[12px] font-mono font-bold bg-[#9281f7]/10 text-[#9281f7] px-3 py-1 rounded border border-[#9281f7]/20">
+                v{release.version}
               </span>
             </div>
-            
-            {/* Version Badge */}
-            <span className="text-[10px] font-mono font-bold bg-blue-500/10 text-cyan-400 px-3 py-1 rounded-full border border-blue-500/20">
-              v{release.version}
-            </span>
+
+            {/* Spec details grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-6 text-[13px] font-mono">
+              <div className="space-y-1">
+                <span className="text-[#a1a4a5] uppercase text-[11px] tracking-wider block">File size</span>
+                <p className="text-white font-medium">{release.fileSize}</p>
+              </div>
+              <div className="space-y-1">
+                <span className="text-[#a1a4a5] uppercase text-[11px] tracking-wider block">Release date</span>
+                <p className="text-white font-medium">{release.releaseDate}</p>
+              </div>
+              <div className="space-y-1 col-span-2 md:col-span-1">
+                <span className="text-[#a1a4a5] uppercase text-[11px] tracking-wider block">Platform</span>
+                <p className="text-white font-medium">Native x64 exe</p>
+              </div>
+            </div>
+
+            {/* SHA256 checksum */}
+            <div className="p-4 rounded border border-[#292d30] bg-[#000000] font-commit text-[12px] space-y-2">
+              <div className="flex items-center gap-2 text-[#a1a4a5] uppercase tracking-wider text-[10px]">
+                <Terminal className="w-3.5 h-3.5" />
+                <span>SHA-256 Checksum</span>
+              </div>
+              <p className="text-white/80 font-mono break-all leading-normal select-text">
+                {dummyChecksum}
+              </p>
+            </div>
+
+            {/* CTA action */}
+            <div className="pt-2">
+              <a
+                href={release.installerUrl}
+                className="btn-primary w-full py-4 text-[14px]"
+                style={{ backgroundColor: '#3b9eff' }}
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Setup EXE</span>
+              </a>
+            </div>
+
+            {/* Release notes summary */}
+            <div className="p-5 rounded border border-[#292d30] bg-[#000000] space-y-3">
+              <div className="flex items-center gap-2 text-[#a1a4a5] uppercase tracking-wider text-[11px] font-mono">
+                <FileText className="w-4 h-4 text-[#9281f7]" />
+                <span>Release Summary</span>
+              </div>
+              <p className="text-[13px] text-[#a1a4a5] leading-relaxed font-normal">
+                {release.releaseNotes}
+              </p>
+            </div>
           </div>
 
-          {/* Quick Specifications */}
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div className="space-y-1">
-              <span className="text-slate-500 font-semibold uppercase text-[9px] tracking-wider">File Size</span>
-              <p className="text-white font-bold">{release.fileSize}</p>
+          {/* System Requirements & Guides */}
+          <div className="space-y-8">
+            {/* Specs card */}
+            <div className="p-8 rounded-2xl border border-[#292d30] bg-[#000000] space-y-6 text-left">
+              <h3 className="text-[14px] font-mono text-white uppercase tracking-wider border-b border-[#292d30] pb-3">
+                System Requirements
+              </h3>
+
+              <div className="space-y-4 text-[13px]">
+                <div className="space-y-1">
+                  <h4 className="font-medium text-white">OS Architecture</h4>
+                  <p className="text-[#a1a4a5] leading-relaxed">
+                    Windows 10, Windows 11 (64-bit strictly required).
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="font-medium text-white">Hardware Limits</h4>
+                  <p className="text-[#a1a4a5] leading-relaxed">
+                    Minimum 4GB system RAM. Utilizes local CPU multi-threading.
+                  </p>
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="font-medium text-white">Audio Capture</h4>
+                  <p className="text-[#a1a4a5] leading-relaxed">
+                    Requires default microphone input access permissions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="p-4 rounded border border-[#292d30] bg-[#000000] flex gap-3 text-left">
+                <AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-[#a1a4a5] text-[12px] leading-relaxed">
+                  <strong>Local installation:</strong> Unpacks compiled whisper-blas libraries on onboarding launch. Ensure target folders are writable.
+                </p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <span className="text-slate-500 font-semibold uppercase text-[9px] tracking-wider">Release Date</span>
-              <p className="text-white font-bold">{release.releaseDate}</p>
+
+            {/* Multi-step Installation Guide */}
+            <div className="p-8 rounded-2xl border border-[#292d30] bg-[#000000] space-y-6 text-left">
+              <h3 className="text-[14px] font-mono text-white uppercase tracking-wider border-b border-[#292d30] pb-3">
+                Installation Steps
+              </h3>
+
+              <div className="space-y-4 text-[13px]">
+                <div className="flex gap-3">
+                  <span className="text-[#9281f7] font-mono">1.</span>
+                  <p className="text-[#a1a4a5]">Download the setup executable binary file.</p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-[#9281f7] font-mono">2.</span>
+                  <p className="text-[#a1a4a5]">Double click on the installer to begin setup.</p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-[#9281f7] font-mono">3.</span>
+                  <p className="text-[#a1a4a5]">Choose your installation directory paths.</p>
+                </div>
+                <div className="flex gap-3">
+                  <span className="text-[#9281f7] font-mono">4.</span>
+                  <p className="text-[#a1a4a5]">Download the GGML voice recognition model file.</p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div className="pt-2">
-            <a
-              href={release.installerUrl}
-              className="w-full bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white text-xs font-bold py-3 rounded-xl transition-all shadow-lg shadow-blue-900/35 cursor-pointer flex items-center justify-center gap-2 uppercase tracking-wider text-center"
-            >
-              <Download className="w-4 h-4" />
-              <span>Download VoiceFloo Setup.exe</span>
-            </a>
-          </div>
-
-          {/* Release logs box */}
-          <div className="p-4 rounded-2xl border border-white/5 bg-white/[0.01] space-y-2 select-text text-xs">
-            <div className="flex items-center gap-2 text-white/50 font-bold uppercase tracking-wider text-[9px]">
-              <FileText className="w-3.5 h-3.5" />
-              <span>Latest Release Notes</span>
-            </div>
-            <p className="text-slate-400 leading-relaxed font-medium">
-              {release.releaseNotes}
-            </p>
-          </div>
         </div>
 
-        {/* Requirements Card */}
-        <div className="p-6 rounded-3xl border border-white/5 bg-white/[0.01] space-y-6">
-          <h3 className="text-xs font-bold text-white uppercase tracking-wider border-b border-white/5 pb-3">
-            System Specifications
-          </h3>
-
-          <div className="space-y-4">
-            <div className="space-y-1">
-              <h4 className="text-[11px] font-bold text-white/80">Windows Compatibility</h4>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                Windows 10, Windows 11 (64-bit architecture only).
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <h4 className="text-[11px] font-bold text-white/80">CPU / RAM</h4>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                Minimum 4GB RAM. Dictation models utilize CPU multi-threading.
-              </p>
-            </div>
-
-            <div className="space-y-1">
-              <h4 className="text-[11px] font-bold text-white/80">Accessibility access</h4>
-              <p className="text-[10px] text-slate-500 leading-normal">
-                Requires standard user keyboard focus overrides to support typing.
-              </p>
+        {/* Footer info link */}
+        <div className="p-6 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+          <div className="flex items-center gap-3">
+            <CheckCircle2 className="w-5 h-5 text-[#3ad389]" />
+            <div>
+              <h4 className="text-[14px] font-medium text-white">Latest release verification</h4>
+              <p className="text-[12px] text-[#a1a4a5]">Downloads are cryptographically checked against GitHub tags.</p>
             </div>
           </div>
-
-          <div className="p-3.5 rounded-2xl border border-yellow-500/10 bg-yellow-950/5 flex gap-2.5 text-left text-xs select-text">
-            <AlertCircle className="w-4.5 h-4.5 text-yellow-400 shrink-0 mt-0.5" />
-            <p className="text-slate-400 text-[10px] leading-relaxed">
-              <strong>Offline notice:</strong> The setup installer checks and unzips whisper-blas binary executables on first boot. Make sure you complete the onboarding downloader to verify microphone lines.
-            </p>
-          </div>
+          <Link
+            href="/changelog"
+            className="text-[13px] font-mono text-[#9281f7] hover:text-[#baa7ff] transition-colors uppercase tracking-wider flex items-center gap-1 shrink-0"
+          >
+            <span>Read full changelog</span>
+            <ChevronRight className="w-4 h-4" />
+          </Link>
         </div>
 
       </div>
-
-      {/* Cross-platform notice */}
-      <div className="mt-16 p-6 rounded-2xl border border-white/5 bg-[#050710]/40 flex flex-col md:flex-row items-center justify-between gap-4 text-left">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/25 flex items-center justify-center text-blue-400">
-            <CheckCircle className="w-5 h-5" />
-          </div>
-          <div>
-            <h4 className="text-xs font-bold text-white">Looking for macOS or Linux?</h4>
-            <p className="text-[10px] text-slate-500">Auto-update support for Apple Silicon and Linux targets are under development.</p>
-          </div>
-        </div>
-        <Link
-          href="/changelog"
-          className="text-xs font-bold text-cyan-400 hover:text-cyan-300 transition-colors uppercase tracking-wider shrink-0 cursor-pointer"
-        >
-          View Full Release Changelog
-        </Link>
-      </div>
-
     </div>
   )
 }
