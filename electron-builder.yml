@@ -9,8 +9,10 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+  - '!resources/whisper/**/*'
 asarUnpack:
-  - resources/**
+  - resources/*
+  - '!resources/whisper/**'
 win:
   executableName: VoiceFloo
 nsis:
@@ -46,3 +48,10 @@ publish:
   owner: realabrar1
   repo: VoiceFloo
   releaseType: release
+
+extraResources:
+  - from: resources/whisper
+    to: whisper
+    filter:
+      - '**/*'
+

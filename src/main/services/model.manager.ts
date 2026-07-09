@@ -1,7 +1,6 @@
 import { app, BrowserWindow } from 'electron'
 import { existsSync, mkdirSync, unlinkSync, createWriteStream, statSync } from 'fs'
 import { join } from 'path'
-import { exec } from 'child_process'
 import * as https from 'https'
 import { logger } from './logger.service'
 
@@ -18,7 +17,6 @@ export interface ModelInfo {
 }
 
 export class ModelManager {
-  private binDir: string
   private modelsDir: string
   private isDownloading: boolean = false
   private activeDownloadRequest: any = null
@@ -72,26 +70,27 @@ export class ModelManager {
   ]
 
   constructor() {
-    this.binDir = join(app.getPath('userData'), 'bin')
-    this.modelsDir = join(this.getResourcesPath(), 'models')
+    this.modelsDir = join(app.getPath('userData'), 'models')
 
-    // Ensure target folders exist
-    if (!existsSync(this.binDir)) mkdirSync(this.binDir, { recursive: true })
+    // Ensure models folder exists
     if (!existsSync(this.modelsDir)) mkdirSync(this.modelsDir, { recursive: true })
 
     this.checkInstalledModels()
-  }
-
-  public getBinDir(): string {
-    return this.binDir
   }
 
   public getModelsDir(): string {
     return this.modelsDir
   }
 
+  private getWhisperBinPath(): string {
+    if (app.isPackaged) {
+      return join(process.resourcesPath, 'whisper')
+    }
+    return join(app.getAppPath(), 'resources', 'whisper')
+  }
+
   public getWhisperExecutablePath(): string {
-    return join(this.binDir, 'main.exe')
+    return join(this.getWhisperBinPath(), 'whisper-cli.exe')
   }
 
   public getModelPath(modelId: string): string {
@@ -121,7 +120,7 @@ export class ModelManager {
   }
 
   /**
-   * Download the required whisper.cpp binary executable and selected model file.
+   * Download the selected whisper.cpp model file.
    */
   public async downloadModel(modelId: string, window: BrowserWindow): Promise<void> {
     if (this.isDownloading) {
@@ -130,10 +129,9 @@ export class ModelManager {
     this.isDownloading = true
 
     try {
-      // 1. Download native binary if not found
+      // 1. Verify bundled binary exists
       if (!this.isWhisperInstalled()) {
-        logger.info('ModelManager: whisper.cpp binary not found. Initiating binary download...')
-        await this.downloadBinary(window)
+        throw new Error('Whisper speech engine binary was not found in application resources.')
       }
 
       // 2. Download model bin
@@ -179,43 +177,6 @@ export class ModelManager {
       this.isDownloading = false
       logger.info('ModelManager: Active download aborted by user request.')
     }
-  }
-
-  /**
-   * Fetches whisper.cpp windows package and extracts via PowerShell.
-   */
-  private downloadBinary(window: BrowserWindow): Promise<void> {
-    const zipUrl = 'https://github.com/ggerganov/whisper.cpp/releases/download/v1.8.6/whisper-blas-bin-x64.zip'
-    const tempZipPath = join(app.getPath('temp'), `whisper-blas-${Date.now()}.zip`)
-
-    return new Promise(async (resolve, reject) => {
-      try {
-        await this.downloadFile(zipUrl, tempZipPath, 'binary', window)
-        logger.info('ModelManager: Whisper binary package downloaded. Unzipping...')
-
-        const extractCmd = `powershell -Command "Expand-Archive -Path '${tempZipPath}' -DestinationPath '${this.binDir}' -Force"`
-        exec(extractCmd, (err, _stdout, stderr) => {
-          try {
-            if (existsSync(tempZipPath)) unlinkSync(tempZipPath)
-          } catch {}
-
-          if (err) {
-            logger.error(`ModelManager: Zip extraction failed: ${stderr || err.message}`)
-            reject(new Error(`Failed to extract whisper.cpp binaries: ${stderr || err.message}`))
-            return
-          }
-
-          if (this.isWhisperInstalled()) {
-            logger.info('ModelManager: Whisper binary executable unpacked successfully.')
-            resolve()
-          } else {
-            reject(new Error('Zip extracted but main.exe was not found inside bin directory.'))
-          }
-        })
-      } catch (err) {
-        reject(err)
-      }
-    })
   }
 
   /**
@@ -279,16 +240,6 @@ export class ModelManager {
     })
   }
 
-  private getResourcesPath(): string {
-    if (app.isPackaged) {
-      const unpacked = join(process.resourcesPath, 'app.asar.unpacked/resources')
-      if (existsSync(unpacked)) {
-        return unpacked
-      }
-      return join(process.resourcesPath, 'resources')
-    }
-    return join(app.getAppPath(), 'resources')
-  }
 }
 
 export const modelManager = new ModelManager()
