@@ -228,5 +228,10 @@ html, body {
   border-color: var(--color-graphite-hairline);
 }
 
+/* Hide Next.js Dev tools portal and overlay badges */
+nextjs-portal {
+  display: none !important;
+}
+
 
 
