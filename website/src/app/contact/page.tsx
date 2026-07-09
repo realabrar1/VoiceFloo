@@ -38,7 +38,7 @@ export default function ContactPage() {
       <div className="site-container max-w-[1000px] space-y-16">
 
         {/* Header */}
-        <div className="space-y-6 text-center max-w-2xl mx-auto">
+        <div className="space-y-6 text-center max-w-2xl mx-auto flex flex-col items-center">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
             <Mail className="w-4 h-4 text-[#9281f7]" />
             <span>Support channels</span>
