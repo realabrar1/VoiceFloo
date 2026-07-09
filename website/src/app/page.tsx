@@ -7,7 +7,7 @@ import {
   Sparkles, Download, Shield, Zap, Keyboard, HelpCircle,
   ArrowRight, CheckCircle2, Command,
   Terminal, FileText, Check, Play, Pause, Trash2,
-  Globe, Cpu, Loader2
+  Globe, Cpu, Loader2, Laptop, Rocket, Brain, Mic
 } from 'lucide-react'
 import Lenis from 'lenis'
 import { VscVscode, VscTerminal } from 'react-icons/vsc'
@@ -463,34 +463,75 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <br />
       {/* 6 WORKFLOW TIMELINE */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16">
           <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Getting Started
           </h2>
+          <br />
 
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 text-left">
             {[
-              { step: '01', title: 'Download', desc: 'Setup EXE binary file.' },
-              { step: '02', title: 'Run Setup', desc: 'Installs inside standard program folders.' },
-              { step: '03', title: 'Start Application', desc: 'Launches local system tray icon.' },
-              { step: '04', title: 'Model Check', desc: 'Downloads default speech model.' },
-              { step: '05', title: 'Configure Keys', desc: 'Override default shortcut commands.' },
-              { step: '06', title: 'Dictate Speech', desc: 'Type instantly in any background.' }
+              {
+                step: '01',
+                title: 'Download',
+                desc: 'Setup EXE binary file.',
+                icon: <Download className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              },
+              {
+                step: '02',
+                title: 'Run Setup',
+                desc: 'Installs inside standard program folders.',
+                icon: <Laptop className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              },
+              {
+                step: '03',
+                title: 'Start Application',
+                desc: 'Launches local system tray icon.',
+                icon: <Rocket className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              },
+              {
+                step: '04',
+                title: 'Model Check',
+                desc: 'Downloads default speech model.',
+                icon: <Brain className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              },
+              {
+                step: '05',
+                title: 'Configure Keys',
+                desc: 'Override default shortcut commands.',
+                icon: <Keyboard className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              },
+              {
+                step: '06',
+                title: 'Dictate Speech',
+                desc: 'Type instantly in any background.',
+                icon: <Mic className="w-9 h-9 text-[#9281f7] transition-transform duration-300 group-hover:scale-110" />
+              }
             ].map((item, idx) => (
-              <div key={idx} className="p-6 rounded border border-[#292d30] bg-[#000000] min-h-[160px] flex flex-col justify-between hover:border-[#9281f7] transition-colors">
-                <span className="font-commit text-[14px] text-[#9281f7]">{item.step}</span>
-                <div>
-                  <h4 className="text-[14px] font-medium text-white mb-2">{item.title}</h4>
-                  <p className="text-[12px] text-[#a1a4a5] leading-relaxed">{item.desc}</p>
+              <motion.div
+                key={idx}
+                whileHover={{
+                  y: -4,
+                  borderColor: '#9281f7'
+                }}
+                transition={{ duration: 0.3 }}
+                className="p-6 rounded-xl border border-[#292d30] bg-[#000000] min-h-[220px] flex flex-col items-center justify-center text-center select-none cursor-pointer group"
+              >
+                <div className="flex justify-center items-center mb-5 w-10 h-10">
+                  {item.icon}
                 </div>
-              </div>
+                <span className="font-commit text-[13px] text-[#9281f7] block mb-2">{item.step}</span>
+                <h4 className="text-[14px] font-medium text-white mb-2">{item.title}</h4>
+                <p className="text-[12px] text-[#a1a4a5] leading-relaxed max-w-[150px] mx-auto">{item.desc}</p>
+              </motion.div>
             ))}
           </div>
         </div>
       </section>
+      <br />
 
       {/* 7 INTEGRATIONS LOGOS */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
@@ -553,6 +594,7 @@ export default function HomePage() {
           <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Performance Benchmarks
           </h2>
+          <br />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             <StatCounter value="600" label="Typing Latency" prefix="<" suffix="ms" />
             <StatCounter value="100" label="Offline Run" suffix="%" />
@@ -570,6 +612,7 @@ export default function HomePage() {
           <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Beyond Expectations
           </h2>
+          <br />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
@@ -577,15 +620,15 @@ export default function HomePage() {
               { name: 'David Chen', role: 'Developer', quote: 'The keyboard inject engine is extremely robust. It prints code directly inside VS Code and terminals instantly.' },
               { name: 'Amanda Rossi', role: 'Security Architect', quote: 'Privacy-first dictation is a game changer. The audio frame processing runs entirely inside memory.' }
             ].map((item, idx) => (
-              <div key={idx} className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col justify-between min-h-[220px]">
-                <p className="text-[15px] text-[#f0f0f0] italic leading-relaxed mb-8">“{item.quote}”</p>
-                <div className="flex items-center gap-3">
+              <div key={idx} className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col items-center justify-center text-center min-h-[240px] hover:border-[#9281f7] transition-colors select-none">
+                <p className="text-[15px] text-[#f0f0f0] italic leading-relaxed mb-6">“{item.quote}”</p>
+                <div className="flex flex-col items-center gap-2">
                   <div className="w-8 h-8 rounded-full bg-[#292d30] flex items-center justify-center text-white text-[12px] font-bold">
                     {item.name[0]}
                   </div>
                   <div>
                     <h5 className="text-[14px] font-medium text-[#f0f0f0]">{item.name}</h5>
-                    <span className="text-[12px] text-[#a1a4a5] font-mono">{item.role}</span>
+                    <span className="text-[12px] text-[#a1a4a5] font-mono block mt-0.5">{item.role}</span>
                   </div>
                 </div>
               </div>
@@ -593,13 +636,15 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <br />
       {/* 11 FAQ ACCORDION */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container max-w-3xl space-y-16">
           <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             FAQ
           </h2>
+          <br />
+          <br />
           <div className="space-y-2">
             <FaqItem
               question="Does VoiceFloo stream audio data?"
