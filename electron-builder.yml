@@ -43,6 +43,6 @@ appImage:
 npmRebuild: false
 publish:
   provider: github
-  owner: voicefloo-org
+  owner: realabrar1
   repo: VoiceFloo
   releaseType: release

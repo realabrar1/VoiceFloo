@@ -7,13 +7,13 @@ export interface GitHubRelease {
   changelogNotes: string
 }
 
-const GITHUB_REPO = 'voicefloo-org/VoiceFloo'
+const GITHUB_REPO = 'realabrar1/VoiceFloo'
 
 // Fallback release if GitHub is rate-limited or repository is not yet populated with binary files
 const FALLBACK_RELEASE: GitHubRelease = {
   version: '1.0.0',
   releaseDate: '2026-07-08',
-  installerUrl: 'https://github.com/voicefloo-org/VoiceFloo/releases/download/v1.0.0/voicefloo-1.0.0-setup.exe',
+  installerUrl: 'https://github.com/realabrar1/VoiceFloo/releases/download/v1.0.0/voicefloo-1.0.0-setup.exe',
   fileSize: '65.2 MB',
   releaseNotes: 'Core release containing completely offline speech recognition, RMS-based VAD silencers, and Windows keypress injections.',
   changelogNotes: '### Core Release v1.0.0\n\n- **Offline AI Speech Recognition**: Runs whisper.cpp natively on your local machine.\n- **Voice Activity Detection**: RMS-based VAD silences transcription during gaps to reduce CPU load.\n- **Windows Input Engine**: Simulates SendKeys and copy-paste overlays to type text anywhere.\n- **First Launch Wizard**: Easily download models and verify microphone levels.'
