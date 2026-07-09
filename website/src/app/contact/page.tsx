@@ -150,6 +150,22 @@ export default function ContactPage() {
 
         </div>
 
+        {/* About the Developer Section */}
+        <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col md:flex-row items-center gap-8 text-left">
+          <img
+            src="https://raw.githubusercontent.com/realabrar1/It-s_abrar/refs/heads/main/src/assets/about/image.png"
+            className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-[#292d30] object-cover shrink-0 select-none"
+            alt="Abrar - Developer of VoiceFloo"
+          />
+          <div className="space-y-4">
+            <span className="font-commit text-[12px] text-[#9281f7] uppercase tracking-wider block">Creator</span>
+            <h3 className="text-[22px] font-medium text-white tracking-tight">About the Developer</h3>
+            <p className="text-[14px] text-[#a1a4a5] leading-relaxed font-sans">
+              VoiceFloo is created and maintained by <strong>Abrar</strong>. Built with a focus on absolute privacy, low-level keyboard input injection, and high-performance offline AI, it provides developers with a seamless, cloud-free global dictation workflow.
+            </p>
+          </div>
+        </div>
+
       </div>
     </div>
   )
