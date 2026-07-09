@@ -49,7 +49,7 @@ export default function DocsPage() {
             <span>Developer Reference</span>
           </div>
           
-          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+          <h1 className="text-[36px] sm:text-[56px] leading-[1.1] font-domaine font-normal text-white">
             Documentation
           </h1>
           

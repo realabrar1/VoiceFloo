@@ -19,7 +19,7 @@ export default async function DownloadPage() {
             <span>Setup Installer</span>
           </div>
           
-          <h1 className="text-[56px] md:text-[77px] leading-[1.1] font-domaine font-normal text-white">
+          <h1 className="text-[36px] sm:text-[56px] md:text-[77px] leading-[1.1] font-domaine font-normal text-white">
             Download VoiceFloo
           </h1>
           

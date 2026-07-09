@@ -44,7 +44,7 @@ export default function ContactPage() {
             <span>Support channels</span>
           </div>
 
-          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+          <h1 className="text-[36px] sm:text-[56px] leading-[1.1] font-domaine font-normal text-white">
             Connect
           </h1>
 
@@ -52,6 +52,7 @@ export default function ContactPage() {
             Get technical assistance, submit bug reports, or join our community developers.
           </p>
         </div>
+        <br />
 
         {/* Layout Split Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">

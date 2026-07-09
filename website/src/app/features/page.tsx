@@ -114,7 +114,7 @@ export default function FeaturesPage() {
             <Sparkles className="w-4 h-4 text-[#9281f7]" />
             <span>Product Mechanics</span>
           </div>
-          <h1 className="text-[56px] md:text-[77px] leading-[1.1] font-domaine text-white tracking-tight">
+          <h1 className="text-[36px] sm:text-[56px] md:text-[77px] leading-[1.1] font-domaine text-white tracking-tight">
             Natively Integrated
           </h1>
           <p className="text-[18px] text-[#a1a4a5] leading-relaxed max-w-xl mx-auto">
@@ -128,7 +128,7 @@ export default function FeaturesPage() {
         <div className="site-container flex flex-col md:flex-row items-center justify-between gap-16">
           <div className="flex-1 space-y-6 text-left max-w-xl">
             <span className="font-commit text-[13px] text-[#9281f7] uppercase tracking-widest block">Core Engine</span>
-            <h2 className="text-[36px] md:text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white">
+            <h2 className="text-[30px] sm:text-[36px] md:text-[56px] font-normal font-abc tracking-[-1.5px] md:tracking-[-2.8px] leading-[1.2] text-white">
               100% Offline AI
             </h2>
             <p className="text-[16px] text-[#a1a4a5] leading-relaxed">
@@ -156,7 +156,7 @@ export default function FeaturesPage() {
         <div className="site-container flex flex-col md:flex-row-reverse items-center justify-between gap-16">
           <div className="flex-1 space-y-6 text-left max-w-xl">
             <span className="font-commit text-[13px] text-[#3b9eff] uppercase tracking-widest block">System Injection</span>
-            <h2 className="text-[36px] md:text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white">
+            <h2 className="text-[30px] sm:text-[36px] md:text-[56px] font-normal font-abc tracking-[-1.5px] md:tracking-[-2.8px] leading-[1.2] text-white">
               Type Anywhere
             </h2>
             <p className="text-[16px] text-[#a1a4a5] leading-relaxed">
@@ -184,7 +184,7 @@ export default function FeaturesPage() {
         <div className="site-container flex flex-col md:flex-row items-center justify-between gap-16">
           <div className="flex-1 space-y-6 text-left max-w-xl">
             <span className="font-commit text-[13px] text-[#3ad389] uppercase tracking-widest block">Keyboard Bindings</span>
-            <h2 className="text-[36px] md:text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white">
+            <h2 className="text-[30px] sm:text-[36px] md:text-[56px] font-normal font-abc tracking-[-1.5px] md:tracking-[-2.8px] leading-[1.2] text-white">
               Global Shortcuts
             </h2>
             <p className="text-[16px] text-[#a1a4a5] leading-relaxed">
@@ -210,7 +210,7 @@ export default function FeaturesPage() {
       {/* Download CTA Banner */}
       <section className="py-24">
         <div className="site-container max-w-3xl text-center space-y-8">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white">
+          <h2 className="text-[32px] sm:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white">
             Get VoiceFloo Free
           </h2>
           <p className="text-[18px] text-[#a1a4a5] max-w-md mx-auto">

@@ -350,11 +350,11 @@ export default function HomePage() {
               <span>Announcing VoiceFloo v1.0.0 &gt;</span>
             </div>
 
-            <h1 className="text-[77px] lg:text-[96px] leading-[1.0] font-domaine font-normal text-white select-text">
+            <h1 className="text-[44px] sm:text-[77px] lg:text-[96px] leading-[1.1] sm:leading-[1.0] font-domaine font-normal text-white select-text">
               Speak. Think. Flow.
             </h1>
 
-            <p className="text-[18px] text-[#f0f0f0] font-normal leading-relaxed max-w-[500px]">
+            <p className="text-[15px] sm:text-[18px] text-[#f0f0f0] font-normal leading-relaxed max-w-[500px]">
               The fastest offline AI dictation assistant. VoiceFloo types natively wherever your cursor is. No cloud. No subscription.
             </p>
 
@@ -412,7 +412,7 @@ export default function HomePage() {
       {/* 3 PROBLEM SECTION */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container max-w-4xl text-center space-y-6">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white mb-12">
             Beyond the Cloud
           </h2>
           <p className="text-[18px] text-[#a1a4a5] leading-relaxed max-w-2xl mx-auto">
@@ -425,7 +425,7 @@ export default function HomePage() {
       <section id="demo" className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16 text-center">
           <div className="max-w-2xl mx-auto space-y-4">
-            <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white mb-12">
+            <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white mb-12">
               Type Natively
             </h2>
             <p className="text-[18px] text-[#a1a4a5]">
@@ -439,7 +439,7 @@ export default function HomePage() {
       {/* 5 FEATURES GRID */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Designed for Developers
           </h2>
 
@@ -467,7 +467,7 @@ export default function HomePage() {
       {/* 6 WORKFLOW TIMELINE */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Getting Started
           </h2>
           <br />
@@ -537,7 +537,7 @@ export default function HomePage() {
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16 text-center">
           <div className="max-w-2xl mx-auto space-y-4">
-            <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white mb-12">
+            <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white mb-12">
               Integrates Anywhere
             </h2>
             <p className="text-[18px] text-[#a1a4a5]">
@@ -591,7 +591,7 @@ export default function HomePage() {
       {/* 8 PERFORMANCE STATS */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Performance Benchmarks
           </h2>
           <br />
@@ -604,12 +604,12 @@ export default function HomePage() {
         </div>
       </section>
 
-
+      <br />
 
       {/* 10 TESTIMONIALS */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             Beyond Expectations
           </h2>
           <br />
@@ -640,7 +640,7 @@ export default function HomePage() {
       {/* 11 FAQ ACCORDION */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
         <div className="site-container max-w-3xl space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
             FAQ
           </h2>
           <br />
@@ -661,7 +661,7 @@ export default function HomePage() {
       {/* 12 DOWNLOAD CTA */}
       <section className="py-24 md:py-36 w-full relative z-10">
         <div className="site-container max-w-3xl text-center space-y-8">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white mb-12">
+          <h2 className="text-[32px] sm:text-[44px] md:text-[56px] font-normal font-abc tracking-[-1.5px] sm:tracking-[-2.8px] leading-[1.2] text-white mb-12">
             Ready to Flow?
           </h2>
           <p className="text-[18px] text-[#a1a4a5] max-w-md mx-auto">

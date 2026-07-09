@@ -18,7 +18,7 @@ export default async function ChangelogPage() {
             <span>Changelog timeline</span>
           </div>
           
-          <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
+          <h1 className="text-[36px] sm:text-[56px] leading-[1.1] font-domaine font-normal text-white">
             What&apos;s New
           </h1>
           
