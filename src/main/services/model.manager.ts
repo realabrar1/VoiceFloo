@@ -185,7 +185,7 @@ export class ModelManager {
    * Fetches whisper.cpp windows package and extracts via PowerShell.
    */
   private downloadBinary(window: BrowserWindow): Promise<void> {
-    const zipUrl = 'https://github.com/ggerganov/whisper.cpp/releases/download/v1.7.3/whisper-blas-bin-x64.zip'
+    const zipUrl = 'https://github.com/ggerganov/whisper.cpp/releases/download/v1.8.6/whisper-blas-bin-x64.zip'
     const tempZipPath = join(app.getPath('temp'), `whisper-blas-${Date.now()}.zip`)
 
     return new Promise(async (resolve, reject) => {
