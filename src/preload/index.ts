@@ -72,11 +72,23 @@ const api = {
   },
 
   // Windows Input Engine preloads
-  injectTextInput: (text: string, isFinal: boolean): Promise<boolean> =>
-    ipcRenderer.invoke('input-inject-text', text, isFinal),
+  injectTextInput: (text: string, isFinal: boolean, targetPid?: number): Promise<boolean> =>
+    ipcRenderer.invoke('input-inject-text', text, isFinal, targetPid),
   resetInputSession: (): void => ipcRenderer.send('input-reset-session'),
   getActiveWindow: (): Promise<any> => ipcRenderer.invoke('input-get-active-window'),
   setInputOptions: (options: any): void => ipcRenderer.send('input-set-options', options),
+
+  // Global Shortcut preloads
+  registerGlobalShortcut: (shortcutString: string): void =>
+    ipcRenderer.send('shortcut-register', shortcutString),
+  onGlobalShortcutPress: (callback: (win: any) => void): (() => void) => {
+    const subscription = (_event: any, win: any) => callback(win)
+    ipcRenderer.on('global-shortcut-press', subscription)
+    return () => {
+      ipcRenderer.off('global-shortcut-press', subscription)
+    }
+  },
+  restore: (): void => ipcRenderer.send('window-restore'),
 
   // Auto-update preloads
   checkForUpdates: (manual: boolean): Promise<boolean> => ipcRenderer.invoke('update-check', manual),

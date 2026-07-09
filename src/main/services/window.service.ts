@@ -1,4 +1,4 @@
-import { BrowserWindow, shell, ipcMain } from 'electron'
+import { BrowserWindow, shell, ipcMain, globalShortcut } from 'electron'
 import { join } from 'path'
 import { is } from '@electron-toolkit/utils'
 import { logger } from './logger.service'
@@ -13,6 +13,7 @@ import { updateService } from './update.service'
 export class WindowService {
   private window: BrowserWindow | null = null
   private stateService: WindowStateService
+  private registeredShortcut: string | null = null
 
   constructor(stateService: WindowStateService) {
     this.stateService = stateService
@@ -189,6 +190,53 @@ export class WindowService {
   }
 
   /**
+   * Registers/updates the global hotkey accelerator dynamically.
+   */
+  public registerGlobalShortcut(shortcutString: string): void {
+    if (process.platform !== 'win32' && process.platform !== 'darwin') return
+
+    // Convert UI shortcut format to Electron accelerator format
+    // E.g. "Option + Space" -> "Alt+Space"
+    // E.g. "Ctrl + Shift + Space" -> "Ctrl+Shift+Space"
+    let accelerator = shortcutString
+      .replace(/\s+/g, '') // remove spaces
+      .replace(/Option/gi, 'Alt')
+      .replace(/Ctrl/gi, 'CommandOrControl')
+      .replace(/Command/gi, 'CommandOrControl')
+      .replace(/Control/gi, 'CommandOrControl')
+
+    // Clean up double pluses if any
+    accelerator = accelerator.replace(/\++/g, '+')
+
+    // Unregister current shortcut if registered
+    if (this.registeredShortcut) {
+      try {
+        globalShortcut.unregister(this.registeredShortcut)
+      } catch (err: any) {
+        logger.error(`WindowService: Failed to unregister shortcut: ${err.message}`)
+      }
+    }
+
+    try {
+      globalShortcut.register(accelerator, async () => {
+        logger.info(`Global shortcut pressed: ${accelerator}`)
+        
+        // 1. Grab focused window before focus shifts
+        const win = await focusedWindowService.getFocusedWindow()
+        
+        // 2. Notify renderer
+        if (this.window) {
+          this.window.webContents.send('global-shortcut-press', win)
+        }
+      })
+      this.registeredShortcut = accelerator
+      logger.info(`WindowService: Successfully registered global shortcut: ${accelerator}`)
+    } catch (err: any) {
+      logger.error(`WindowService: Failed to register global shortcut ${accelerator}: ${err.message}`)
+    }
+  }
+
+  /**
    * Setup IPC handlers for window layout control and auto-start management.
    */
   private registerIpcHandlers(): void {
@@ -265,7 +313,12 @@ export class WindowService {
     })
 
     // Windows Input Engine IPC handlers
-    ipcMain.handle('input-inject-text', async (_event, text: string, isFinal: boolean) => {
+    ipcMain.handle('input-inject-text', async (_event, text: string, isFinal: boolean, targetPid?: number) => {
+      if (targetPid) {
+        await focusedWindowService.focusWindow(targetPid)
+        // Add a 100ms delay to let the OS switch focus context
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
       await inputEngine.handleInput(text, isFinal)
       return true
     })
@@ -280,6 +333,20 @@ export class WindowService {
 
     ipcMain.on('input-set-options', (_event, options: any) => {
       inputEngine.setOptions(options)
+    })
+
+    // Shortcut registration IPC handler
+    ipcMain.on('shortcut-register', (_event, shortcutString: string) => {
+      this.registerGlobalShortcut(shortcutString)
+    })
+
+    // Window restore IPC handler
+    ipcMain.on('window-restore', () => {
+      if (this.window) {
+        this.window.restore()
+        this.window.show()
+        this.window.focus()
+      }
     })
 
     // Auto-update IPC handlers

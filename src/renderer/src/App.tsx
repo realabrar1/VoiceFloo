@@ -93,7 +93,7 @@ function App(): React.JSX.Element {
   const [autoRestoreClipboard, setAutoRestoreClipboard] = useState(true)
   const [delayBeforeTyping, setDelayBeforeTyping] = useState(50)
   const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(true)
-  const [targetWindow, setTargetWindow] = useState<{ executable: string; title: string } | null>(null)
+  const [targetWindow, setTargetWindow] = useState<{ pid: number; executable: string; title: string } | null>(null)
 
   // Device list states
   const [devicesList, setDevicesList] = useState<AudioInputDevice[]>([])
@@ -106,10 +106,23 @@ function App(): React.JSX.Element {
   const [showPermissionError, setShowPermissionError] = useState(false)
 
   // Settings states
-  const [shortcut, setShortcut] = useState('Option + Space')
+  const [shortcut, setShortcut] = useState(() => {
+    return localStorage.getItem('voicefloo-shortcut') || 'Option + Space'
+  })
   const [aiMode, setAiMode] = useState('Smart Format')
   const [launchAtStartup, setLaunchAtStartup] = useState(false)
   const [language, setLanguage] = useState('EN')
+
+  // Refs to prevent stale closures inside global event subscriptions
+  const targetWindowRef = React.useRef<{ pid: number; executable: string; title: string } | null>(null)
+  const handleMicClickRef = React.useRef<any>(null)
+  
+  targetWindowRef.current = targetWindow
+
+  // Sync global shortcut registration with the main process on change
+  useEffect(() => {
+    window.api.registerGlobalShortcut(shortcut)
+  }, [shortcut])
   
   // Whisper specific configurations
   const [activeModelId, setActiveModelId] = useState('base')
@@ -246,8 +259,8 @@ function App(): React.JSX.Element {
 
     const handleTranscriptUpdated = (text: string) => {
       setLiveTranscript(text)
-      // Stream incremental keystrokes live
-      window.api.injectTextInput(text, false)
+      // Stream incremental keystrokes live to the target window
+      window.api.injectTextInput(text, false, targetWindowRef.current?.pid)
     }
 
     const handleSpeechActive = () => {
@@ -270,6 +283,12 @@ function App(): React.JSX.Element {
     audioEngine.events.on('SpeechActive', handleSpeechActive)
     audioEngine.events.on('SilenceDetected', handleSilenceDetected)
 
+    const removeGlobalShortcutPress = window.api.onGlobalShortcutPress((win) => {
+      if (handleMicClickRef.current) {
+        handleMicClickRef.current(win)
+      }
+    })
+
     return () => {
       removeFadeIn()
       removeFadeOut()
@@ -277,6 +296,7 @@ function App(): React.JSX.Element {
       removeDownloadProgress()
       unsubSuccess()
       unsubError()
+      removeGlobalShortcutPress()
 
       audioEngine.events.off('AudioLevelChanged', handleLevelChanged)
       audioEngine.events.off('RecordingDurationUpdated', handleDurationUpdated)
@@ -397,12 +417,12 @@ function App(): React.JSX.Element {
   }
 
   // Toggle Dictation session
-  const handleMicClick = async () => {
+  const handleMicClick = async (shortcutWin?: any) => {
     if (!isWhisperReady) {
       return
     }
 
-    if (micState === 'idle') {
+    if (micState === 'idle' || micState === 'error') {
       try {
         setDuration(0)
         setLiveLevel(0)
@@ -415,8 +435,17 @@ function App(): React.JSX.Element {
         window.api.resetInputSession()
         
         // Grab foreground active window metadata before focus shifts
-        const win = await window.api.getActiveWindow()
-        setTargetWindow(win)
+        let win = shortcutWin
+        if (!win || win.executable === 'VoiceFloo.exe' || win.executable === 'unknown') {
+          win = await window.api.getActiveWindow()
+        }
+        
+        if (win && win.executable !== 'VoiceFloo.exe' && win.executable !== 'unknown') {
+          setTargetWindow(win)
+        }
+
+        // Minimize window to transfer focus back to target app
+        window.api.minimize()
 
         await audioEngine.startRecording()
         setMicState('recording')
@@ -428,8 +457,15 @@ function App(): React.JSX.Element {
       } catch (err) {
         console.error('Failed to start recording session:', err)
       }
+    } else if (micState === 'recording' || micState === 'paused') {
+      await handleStopRecording()
+      // Restore window state
+      window.api.restore()
     }
   }
+
+  // Update handler ref on every render to prevent React closure staleness
+  handleMicClickRef.current = handleMicClick
 
   // Control Actions
   const handlePauseRecording = () => {
@@ -455,9 +491,9 @@ function App(): React.JSX.Element {
     // 2. Compile final transcription
     const finalText = await speechEngine.stopSession()
 
-    // 3. Trigger final paste strategy insertion
+    // 3. Trigger final paste strategy insertion with active window PID
     if (finalText && finalText.trim().length > 0) {
-      await window.api.injectTextInput(finalText, true) // isFinal = true
+      await window.api.injectTextInput(finalText, true, targetWindowRef.current?.pid) // isFinal = true
       
       setHistoryItems(prev => [
         {

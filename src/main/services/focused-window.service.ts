@@ -77,6 +77,38 @@ export class FocusedWindowService {
       })
     })
   }
+
+  /**
+   * Restores focus to a background window by its Process ID.
+   */
+  public focusWindow(pid: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      if (process.platform !== 'win32' || !pid) {
+        resolve(false)
+        return
+      }
+
+      const script = `
+        $wshell = New-Object -ComObject Wscript.Shell;
+        $success = $wshell.AppActivate(${pid});
+        ConvertTo-Json @{ success = $success }
+      `.replace(/\r?\n/g, ' ').trim()
+
+      exec(`powershell -Command "${script}"`, (err, stdout) => {
+        if (err) {
+          logger.error(`FocusedWindowService: Failed to focus window: ${err.message}`)
+          resolve(false)
+          return
+        }
+        try {
+          const raw = JSON.parse(stdout.trim())
+          resolve(!!raw.success)
+        } catch (e) {
+          resolve(false)
+        }
+      })
+    })
+  }
 }
 
 export const focusedWindowService = new FocusedWindowService()

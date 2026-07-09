@@ -20,10 +20,13 @@ export interface AppAPI {
   onDownloadProgress: (callback: (data: any) => void) => () => void
   onDownloadSuccess: (callback: (modelId: string) => void) => () => void
   onDownloadError: (callback: (errorMsg: string) => void) => () => void
-  injectTextInput: (text: string, isFinal: boolean) => Promise<boolean>
+  injectTextInput: (text: string, isFinal: boolean, targetPid?: number) => Promise<boolean>
   resetInputSession: () => void
   getActiveWindow: () => Promise<any>
   setInputOptions: (options: any) => void
+  registerGlobalShortcut: (shortcutString: string) => void
+  onGlobalShortcutPress: (callback: (win: any) => void) => () => void
+  restore: () => void
   checkForUpdates: (manual: boolean) => Promise<boolean>
   downloadUpdate: () => Promise<boolean>
   installAndRestartUpdate: () => void
