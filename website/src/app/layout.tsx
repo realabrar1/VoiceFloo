@@ -42,8 +42,9 @@ export default function RootLayout({
         {/* Navigation Header */}
         <header className="sticky top-0 z-50 w-full border-b border-[#292d30] bg-[#000000f2] backdrop-blur-[25px]">
           <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-            <Link href="/" className="flex items-center gap-2.5 group">
-              <span className="font-semibold text-[14px] tracking-widest uppercase text-white font-abc">
+            <Link href="/" className="flex items-center gap-2.5 group select-none">
+              <img src="/icon.svg" className="w-5 h-5 object-contain" alt="VoiceFloo Logo" />
+              <span className="font-semibold text-[15px] text-white font-abc">
                 VoiceFloo
               </span>
             </Link>
