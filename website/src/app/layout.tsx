@@ -38,12 +38,12 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}>
       <body className="min-h-full flex flex-col bg-[#000000] text-[#f0f0f0]">
-        
+
         {/* Navigation Header */}
         <header className="sticky top-0 z-50 w-full border-b border-[#292d30] bg-[#000000f2] backdrop-blur-[25px]">
           <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5 group select-none">
-              <img src="/icon.svg" className="w-5 h-5 object-contain" alt="VoiceFloo Logo" />
+              <img src="/icon.svg" className="w-20 h-20 object-contain" alt="VoiceFloo Logo" />
               <span className="font-semibold text-[15px] text-white font-abc">
                 VoiceFloo
               </span>

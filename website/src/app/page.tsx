@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
-import { 
-  Sparkles, Download, Shield, Zap, Keyboard, HelpCircle, 
-  ArrowRight, CheckCircle2, Command, 
-  Terminal, FileText, Check, Play, Pause, Trash2, 
+import {
+  Sparkles, Download, Shield, Zap, Keyboard, HelpCircle,
+  ArrowRight, CheckCircle2, Command,
+  Terminal, FileText, Check, Play, Pause, Trash2,
   Globe, Cpu, Loader2
 } from 'lucide-react'
 import Lenis from 'lenis'
+import { VscVscode, VscTerminal } from 'react-icons/vsc'
+import { SiGoogledocs, SiGooglechrome, SiNotepadplusplus, SiDiscord, SiWarp } from 'react-icons/si'
+import { FaSlack } from 'react-icons/fa'
+import { BsMicrosoftTeams } from 'react-icons/bs'
 
 // Minimalist 3D Rotating Cube representation (Pure CSS 3D, matches the Resend logo cube style)
 const HeroCube = () => {
@@ -17,7 +21,7 @@ const HeroCube = () => {
     <div className="relative w-72 h-72 flex items-center justify-center select-none">
       <div className="absolute inset-0 bg-[#9281f7]/5 blur-3xl rounded-full" />
       <div className="w-48 h-48 [perspective:1000px]">
-        <motion.div 
+        <motion.div
           className="w-full h-full relative [transform-style:preserve-3d]"
           animate={{ rotateY: 360, rotateX: 180 }}
           transition={{ duration: 16, repeat: Infinity, ease: 'linear' }}
@@ -73,7 +77,7 @@ const DesktopMockup = () => {
           await new Promise(r => setTimeout(r, 280 + Math.random() * 150))
           if (!active) break
         }
-        
+
         clearInterval(timer)
         if (!active) break
 
@@ -166,7 +170,7 @@ const StatCounter = ({ value, label, prefix = '', suffix = '' }: { value: string
     if (end === 0) return
     const duration = 2000
     const increment = end / (duration / 16)
-    
+
     const timer = setInterval(() => {
       start += increment
       if (start >= end) {
@@ -254,7 +258,7 @@ const InteractiveDemo = () => {
           <p>2 </p>
           <p>3 <span className="text-[#464a4d]">// Press Alt + Space to start dictating instantly</span></p>
         </div>
-        
+
         <div className="flex items-center mt-1">
           <span className="text-[#464a4d] mr-4 select-none">4</span>
           <span className="text-[#f0f0f0]">
@@ -336,7 +340,7 @@ export default function HomePage() {
 
   return (
     <div className="w-full flex flex-col items-center bg-[#000000]">
-      
+
       {/* 1 HERO SECTION */}
       <section className="min-h-[90vh] w-full flex items-center justify-center pt-24 pb-16 relative z-10 border-b border-[#292d30]">
         <div className="site-container flex flex-col lg:flex-row items-center justify-between gap-16">
@@ -498,14 +502,46 @@ export default function HomePage() {
             <p className="text-[18px] text-[#a1a4a5]">
               Types natively inside all productivity tools, editors, and windows.
             </p>
+            <br />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
-            {['VS Code', 'Google Docs', 'Chrome', 'Slack', 'Notepad', 'Teams', 'Discord', 'Terminal', 'Warp', 'Cursor'].map((app, idx) => (
-              <div key={idx} className="p-6 rounded border border-[#292d30] bg-[#000000] flex flex-col items-center justify-center gap-3 transition-colors hover:border-[#a1a4a5] min-h-[120px]">
-                <span className="font-commit text-[13px] text-[#f0f0f0]">{app}</span>
-                <span className="status-dot status-dot-delivered" />
-              </div>
+            {[
+              { name: 'VS Code', Icon: VscVscode, color: '#007ACC' },
+              { name: 'Google Docs', Icon: SiGoogledocs, color: '#4285F4' },
+              { name: 'Chrome', Icon: SiGooglechrome, color: '#EA4335' },
+              { name: 'Slack', Icon: FaSlack, color: '#36C5F0' },
+              { name: 'Notepad++', Icon: SiNotepadplusplus, color: '#90E53D' },
+              { name: 'Microsoft Teams', Icon: BsMicrosoftTeams, color: '#6264A7' },
+              { name: 'Discord', Icon: SiDiscord, color: '#5865F2' },
+              { name: 'Terminal', Icon: VscTerminal, color: '#f0f0f0' },
+              { name: 'Warp', Icon: SiWarp, color: '#f0f0f0' },
+              { name: 'Cursor', Icon: null, isSvg: true, path: '/logos/cursor.svg' }
+            ].map((app, idx) => (
+              <motion.div
+                key={idx}
+                whileHover={{
+                  y: -4,
+                  borderColor: '#4A9EFF',
+                  backgroundColor: 'rgba(74, 158, 255, 0.03)'
+                }}
+                transition={{ duration: 0.3 }}
+                className="p-6 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col items-center justify-center gap-4 aspect-square w-full select-none cursor-pointer"
+              >
+                {app.isSvg ? (
+                  <img
+                    src={app.path}
+                    className="w-8 h-8 object-contain"
+                    alt={`${app.name} Logo`}
+                  />
+                ) : app.Icon ? (
+                  <app.Icon
+                    className="w-8 h-8 object-contain"
+                    style={{ color: app.color }}
+                  />
+                ) : null}
+                <span className="font-commit text-[13px] text-[#f0f0f0]">{app.name}</span>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -526,60 +562,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 9 COMPARISON DECK */}
-      <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
-        <div className="site-container space-y-16">
-          <h2 className="text-[56px] font-normal font-abc tracking-[-2.8px] leading-[1.2] text-white text-center mb-12">
-            VoiceFloo vs Cloud
-          </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* VoiceFloo */}
-            <div className="p-8 rounded-xl border border-[#9281f7]/30 bg-[#000000] flex flex-col justify-between min-h-[300px]">
-              <div>
-                <span className="font-commit text-[13px] text-[#9281f7] uppercase tracking-wider">Local Assistant</span>
-                <h3 className="text-[24px] font-medium text-white mt-2 mb-6">VoiceFloo</h3>
-                <ul className="space-y-4 text-[14px] text-[#a1a4a5]">
-                  <li className="flex justify-between border-b border-[#292d30] pb-2">
-                    <span>Offline Translation</span>
-                    <span className="text-[#3ad389] font-medium">Yes</span>
-                  </li>
-                  <li className="flex justify-between border-b border-[#292d30] pb-2">
-                    <span>Sound Data Logging</span>
-                    <span className="text-[#3ad389] font-medium">None</span>
-                  </li>
-                  <li className="flex justify-between pb-2">
-                    <span>Latency Delay</span>
-                    <span className="text-[#3ad389] font-medium">Instant</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Cloud Dictation */}
-            <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col justify-between min-h-[300px]">
-              <div>
-                <span className="font-commit text-[13px] text-[#a1a4a5] uppercase tracking-wider">Cloud Assistant</span>
-                <h3 className="text-[24px] font-medium text-[#6e727a] mt-2 mb-6">External API</h3>
-                <ul className="space-y-4 text-[14px] text-[#6e727a]">
-                  <li className="flex justify-between border-b border-[#292d30] pb-2">
-                    <span>Offline Translation</span>
-                    <span>No</span>
-                  </li>
-                  <li className="flex justify-between border-b border-[#292d30] pb-2">
-                    <span>Sound Data Logging</span>
-                    <span>Required</span>
-                  </li>
-                  <li className="flex justify-between pb-2">
-                    <span>Latency Delay</span>
-                    <span>Variable</span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* 10 TESTIMONIALS */}
       <section className="py-24 md:py-36 w-full relative z-10 border-b border-[#292d30]">
@@ -618,13 +601,13 @@ export default function HomePage() {
             FAQ
           </h2>
           <div className="space-y-2">
-            <FaqItem 
-              question="Does VoiceFloo stream audio data?" 
-              answer="No. Audio inputs are converted inside local RAM blocks using compiled C++ Whisper libraries. No network connections are initiated during execution." 
+            <FaqItem
+              question="Does VoiceFloo stream audio data?"
+              answer="No. Audio inputs are converted inside local RAM blocks using compiled C++ Whisper libraries. No network connections are initiated during execution."
             />
-            <FaqItem 
-              question="Is VoiceFloo free?" 
-              answer="Yes. VoiceFloo is fully open-source and free, distributed under the MIT license without any subscription restrictions." 
+            <FaqItem
+              question="Is VoiceFloo free?"
+              answer="Yes. VoiceFloo is fully open-source and free, distributed under the MIT license without any subscription restrictions."
             />
           </div>
         </div>
