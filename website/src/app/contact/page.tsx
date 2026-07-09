@@ -36,18 +36,18 @@ export default function ContactPage() {
   return (
     <div className="w-full bg-[#000000] text-[#f0f0f0] min-h-screen py-24">
       <div className="site-container max-w-[1000px] space-y-16">
-        
+
         {/* Header */}
         <div className="space-y-6 text-center max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-[#292d30] text-[13px] font-mono text-[#a1a4a5] uppercase tracking-wider select-none">
             <Mail className="w-4 h-4 text-[#9281f7]" />
             <span>Support channels</span>
           </div>
-          
+
           <h1 className="text-[56px] leading-[1.1] font-domaine font-normal text-white">
             Connect
           </h1>
-          
+
           <p className="text-[16px] text-[#a1a4a5] leading-relaxed max-w-md mx-auto">
             Get technical assistance, submit bug reports, or join our community developers.
           </p>
@@ -55,13 +55,13 @@ export default function ContactPage() {
 
         {/* Layout Split Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start">
-          
+
           {/* Left Column: Email Support Form */}
           <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-6">
             <h3 className="text-[20px] font-medium text-white tracking-tight">
               Email Support
             </h3>
-            
+
             {submitted ? (
               <div className="p-6 rounded border border-[#3ad389]/20 bg-[#000000] text-center space-y-3 font-mono text-[13px]">
                 <span className="status-dot status-dot-delivered" />
@@ -81,7 +81,7 @@ export default function ContactPage() {
                     className="w-full bg-[#000000] border border-[#292d30] hover:border-[#a1a4a5] focus:border-[#9281f7] text-[#f0f0f0] rounded px-4 py-3 text-[14px] outline-none transition-colors font-sans"
                   />
                 </div>
-                
+
                 <div className="space-y-1">
                   <label className="text-[12px] font-mono text-[#a1a4a5] uppercase tracking-wider block">Message Details</label>
                   <textarea
@@ -127,6 +127,7 @@ export default function ContactPage() {
                 <ArrowRight className="w-3.5 h-3.5" />
               </a>
             </div>
+            <br />
 
             {/* Discord Community */}
             <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] space-y-4">
@@ -150,9 +151,10 @@ export default function ContactPage() {
           </div>
 
         </div>
+        <br />
 
         {/* About the Developer Section */}
-        <div className="p-8 rounded-2xl border border-[#292d30] bg-[#000000] relative overflow-hidden flex flex-col md:flex-row items-center md:items-start gap-8 text-left">
+        <div className="p-8 rounded-2xl bg-[#000000] relative overflow-hidden flex flex-col md:flex-row items-center md:items-start gap-8 text-left">
           {/* Subtle Background Glow behind the profile */}
           <div className="absolute top-1/2 left-0 -translate-y-1/2 w-48 h-48 bg-[#9281f7]/5 blur-3xl rounded-full pointer-events-none -z-10" />
 
@@ -174,7 +176,7 @@ export default function ContactPage() {
                 Abrar
               </h3>
             </div>
-            
+
             <p className="text-[14px] text-[#a1a4a5] leading-relaxed font-sans">
               VoiceFloo is created and maintained by <strong>Abrar</strong>. Built with a focus on absolute privacy, low-level keyboard input injection, and high-performance offline AI, it provides developers with a seamless, cloud-free global dictation workflow.
             </p>
