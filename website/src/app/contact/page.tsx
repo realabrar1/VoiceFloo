@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
 import { Sparkles, Mail, MessageSquare, ArrowRight, HelpCircle } from 'lucide-react'
+import { FaGithub, FaTwitter, FaLinkedin, FaEnvelope } from 'react-icons/fa'
 
 // Custom Inline GitHub SVG Icon matching Lucide style
 const GithubIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -152,52 +152,72 @@ export default function ContactPage() {
         </div>
 
         {/* About the Developer Section */}
-        <motion.div
-          whileHover={{
-            y: -4,
-            borderColor: '#9281f7',
-            backgroundColor: 'rgba(146, 129, 247, 0.02)'
-          }}
-          transition={{ duration: 0.3 }}
-          className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col md:flex-row items-center gap-8 text-left relative group cursor-pointer overflow-hidden"
-        >
-          {/* Subtle inner radial gradient */}
-          <div className="absolute inset-0 bg-[#9281f7]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl rounded-full" />
-          
-          <div className="relative shrink-0 select-none overflow-hidden rounded-full border border-[#292d30] group-hover:border-[#9281f7] transition-colors w-24 h-24 md:w-32 md:h-32">
-            <motion.img
+        <div className="p-8 rounded-2xl border border-[#292d30] bg-[#000000] relative overflow-hidden flex flex-col md:flex-row items-center md:items-start gap-8 text-left">
+          {/* Subtle Background Glow behind the profile */}
+          <div className="absolute top-1/2 left-0 -translate-y-1/2 w-48 h-48 bg-[#9281f7]/5 blur-3xl rounded-full pointer-events-none -z-10" />
+
+          {/* Profile Frame */}
+          <div className="relative shrink-0 select-none">
+            <div className="absolute inset-0 border border-[#9281f7]/25 rounded-full scale-105 pointer-events-none animate-pulse" />
+            <img
               src="https://raw.githubusercontent.com/realabrar1/It-s_abrar/refs/heads/main/src/assets/about/image.png"
-              className="w-full h-full object-cover"
-              whileHover={{ scale: 1.08 }}
-              transition={{ duration: 0.3 }}
-              alt="Abrar - Creator of VoiceFloo"
+              className="w-24 h-24 md:w-32 md:h-32 rounded-full border-2 border-[#292d30] object-cover"
+              alt="Abrar - Developer of VoiceFloo"
             />
           </div>
-          <div className="space-y-4 relative z-10 flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#292d30] pb-3">
-              <div>
-                <span className="font-commit text-[11px] text-[#9281f7] uppercase tracking-wider block">Lead Developer</span>
-                <h3 className="text-[22px] font-medium text-white tracking-tight">About the Developer</h3>
-              </div>
-              <div className="font-mono text-[12px] text-[#6e727a]">
-                $ voicefloo --info abrar
-              </div>
+
+          {/* Details Content */}
+          <div className="space-y-4 flex-1">
+            <div className="space-y-1">
+              <span className="font-commit text-[11px] text-[#9281f7] uppercase tracking-wider block">Creator / Lead Architect</span>
+              <h3 className="text-[24px] font-medium text-white tracking-tight flex items-center gap-2">
+                Abrar
+              </h3>
             </div>
             
             <p className="text-[14px] text-[#a1a4a5] leading-relaxed font-sans">
-              VoiceFloo is created and maintained by <strong>Abrar</strong>. Designed with a strict focus on offline voice processing, multi-threaded C++ inference, and direct keyboard injection, VoiceFloo provides developers with a high-performance dictation pipeline.
+              VoiceFloo is created and maintained by <strong>Abrar</strong>. Built with a focus on absolute privacy, low-level keyboard input injection, and high-performance offline AI, it provides developers with a seamless, cloud-free global dictation workflow.
             </p>
 
-            {/* Custom Monospace Badges */}
-            <div className="flex flex-wrap gap-2 pt-2">
-              {['C++ Whisper Cores', 'Electron API Hooks', 'Next.js Frontend', 'Offline AI Dictation'].map((tech) => (
-                <span key={tech} className="px-2.5 py-1 rounded-md border border-[#292d30] bg-[#000000] font-commit text-[11px] text-[#a1a4a5] group-hover:border-[#6e727a] transition-colors">
-                  {tech}
-                </span>
-              ))}
+            {/* Social Icons Row */}
+            <div className="flex items-center gap-3 pt-2">
+              <a
+                href="https://github.com/realabrar1"
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full border border-[#292d30] flex items-center justify-center text-[#a1a4a5] hover:text-[#9281f7] hover:border-[#9281f7] bg-[#000000] hover:bg-[#9281f7]/5 transition-all duration-300"
+                title="GitHub Profile"
+              >
+                <FaGithub className="w-4 h-4" />
+              </a>
+              <a
+                href="https://x.com/realabrar1"
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full border border-[#292d30] flex items-center justify-center text-[#a1a4a5] hover:text-[#9281f7] hover:border-[#9281f7] bg-[#000000] hover:bg-[#9281f7]/5 transition-all duration-300"
+                title="Twitter Profile"
+              >
+                <FaTwitter className="w-4 h-4" />
+              </a>
+              <a
+                href="https://linkedin.com/"
+                target="_blank"
+                rel="noreferrer"
+                className="w-10 h-10 rounded-full border border-[#292d30] flex items-center justify-center text-[#a1a4a5] hover:text-[#9281f7] hover:border-[#9281f7] bg-[#000000] hover:bg-[#9281f7]/5 transition-all duration-300"
+                title="LinkedIn Profile"
+              >
+                <FaLinkedin className="w-4 h-4" />
+              </a>
+              <a
+                href="mailto:support@voicefloo.com"
+                className="w-10 h-10 rounded-full border border-[#292d30] flex items-center justify-center text-[#a1a4a5] hover:text-[#9281f7] hover:border-[#9281f7] bg-[#000000] hover:bg-[#9281f7]/5 transition-all duration-300"
+                title="Email Developer"
+              >
+                <FaEnvelope className="w-4 h-4" />
+              </a>
             </div>
           </div>
-        </motion.div>
+        </div>
 
       </div>
     </div>
