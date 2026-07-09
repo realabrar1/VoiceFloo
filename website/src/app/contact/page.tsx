@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { Sparkles, Mail, MessageSquare, ArrowRight, HelpCircle } from 'lucide-react'
 
 // Custom Inline GitHub SVG Icon matching Lucide style
@@ -151,20 +152,52 @@ export default function ContactPage() {
         </div>
 
         {/* About the Developer Section */}
-        <div className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col md:flex-row items-center gap-8 text-left">
-          <img
-            src="https://raw.githubusercontent.com/realabrar1/It-s_abrar/refs/heads/main/src/assets/about/image.png"
-            className="w-24 h-24 md:w-32 md:h-32 rounded-full border border-[#292d30] object-cover shrink-0 select-none"
-            alt="Abrar - Developer of VoiceFloo"
-          />
-          <div className="space-y-4">
-            <span className="font-commit text-[12px] text-[#9281f7] uppercase tracking-wider block">Creator</span>
-            <h3 className="text-[22px] font-medium text-white tracking-tight">About the Developer</h3>
-            <p className="text-[14px] text-[#a1a4a5] leading-relaxed font-sans">
-              VoiceFloo is created and maintained by <strong>Abrar</strong>. Built with a focus on absolute privacy, low-level keyboard input injection, and high-performance offline AI, it provides developers with a seamless, cloud-free global dictation workflow.
-            </p>
+        <motion.div
+          whileHover={{
+            y: -4,
+            borderColor: '#9281f7',
+            backgroundColor: 'rgba(146, 129, 247, 0.02)'
+          }}
+          transition={{ duration: 0.3 }}
+          className="p-8 rounded-xl border border-[#292d30] bg-[#000000] flex flex-col md:flex-row items-center gap-8 text-left relative group cursor-pointer overflow-hidden"
+        >
+          {/* Subtle inner radial gradient */}
+          <div className="absolute inset-0 bg-[#9281f7]/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-2xl rounded-full" />
+          
+          <div className="relative shrink-0 select-none overflow-hidden rounded-full border border-[#292d30] group-hover:border-[#9281f7] transition-colors w-24 h-24 md:w-32 md:h-32">
+            <motion.img
+              src="https://raw.githubusercontent.com/realabrar1/It-s_abrar/refs/heads/main/src/assets/about/image.png"
+              className="w-full h-full object-cover"
+              whileHover={{ scale: 1.08 }}
+              transition={{ duration: 0.3 }}
+              alt="Abrar - Creator of VoiceFloo"
+            />
           </div>
-        </div>
+          <div className="space-y-4 relative z-10 flex-1">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#292d30] pb-3">
+              <div>
+                <span className="font-commit text-[11px] text-[#9281f7] uppercase tracking-wider block">Lead Developer</span>
+                <h3 className="text-[22px] font-medium text-white tracking-tight">About the Developer</h3>
+              </div>
+              <div className="font-mono text-[12px] text-[#6e727a]">
+                $ voicefloo --info abrar
+              </div>
+            </div>
+            
+            <p className="text-[14px] text-[#a1a4a5] leading-relaxed font-sans">
+              VoiceFloo is created and maintained by <strong>Abrar</strong>. Designed with a strict focus on offline voice processing, multi-threaded C++ inference, and direct keyboard injection, VoiceFloo provides developers with a high-performance dictation pipeline.
+            </p>
+
+            {/* Custom Monospace Badges */}
+            <div className="flex flex-wrap gap-2 pt-2">
+              {['C++ Whisper Cores', 'Electron API Hooks', 'Next.js Frontend', 'Offline AI Dictation'].map((tech) => (
+                <span key={tech} className="px-2.5 py-1 rounded-md border border-[#292d30] bg-[#000000] font-commit text-[11px] text-[#a1a4a5] group-hover:border-[#6e727a] transition-colors">
+                  {tech}
+                </span>
+              ))}
+            </div>
+          </div>
+        </motion.div>
 
       </div>
     </div>
