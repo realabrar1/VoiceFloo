@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Clock, ArrowLeft, ToggleLeft, ToggleRight, Sparkles, Trash2, Play, Pause, AlertCircle, Check, Loader2, Keyboard, Clipboard } from 'lucide-react'
-import { TitleBar } from './components/TitleBar'
+import { ToggleLeft, ToggleRight, Sparkles, Play, Pause, AlertCircle, Check, X } from 'lucide-react'
 import { AnimatedBackground } from './components/AnimatedBackground'
-import { GlassCard } from './components/GlassCard'
-import { FloatingMicButton } from './components/FloatingMicButton'
-import { StatusIndicator } from './components/StatusIndicator'
-import { BottomToolbar } from './components/BottomToolbar'
-import { GlassButton } from './components/GlassButton'
 
 // Import the Audio Engine orchestrator and types
 import { audioEngine } from './services/audio/audio-engine'
@@ -15,60 +9,69 @@ import { AudioInputDevice } from './services/audio/audio-device-manager'
 
 // Import the Speech Engine orchestrator
 import { speechEngine } from './services/speech/speech-engine'
-import { OnboardingWizard } from './components/Onboarding/OnboardingWizard'
 
-// Real-time Visual Waveform Component
-interface VisualWaveformProps {
+interface OverlayWaveformProps {
   level: number
   isPaused: boolean
+  isSpeaking: boolean
 }
 
-const VisualWaveform: React.FC<VisualWaveformProps> = ({ level, isPaused }) => {
-  const [heights, setHeights] = useState<number[]>(new Array(15).fill(4))
+const OverlayWaveform: React.FC<OverlayWaveformProps> = ({ level, isPaused, isSpeaking }) => {
+  const barCount = 52
+  const [heights, setHeights] = useState<number[]>(new Array(barCount).fill(4))
 
   useEffect(() => {
     if (isPaused) {
-      setHeights(new Array(15).fill(4))
+      setHeights(new Array(barCount).fill(4))
       return
     }
 
-    // Generate real-time bar heights at ~60 FPS
     const interval = setInterval(() => {
       setHeights(() => {
-        return Array.from({ length: 15 }).map((_, i) => {
-          const factor = Math.sin((i / 14) * Math.PI) // Peak in the center
-          const randomFactor = 0.5 + Math.random() * 0.5
-          // Scale based on audio level
-          const height = 4 + level * 64 * factor * randomFactor
-          return Math.max(4, Math.min(68, height))
+        return Array.from({ length: barCount }).map((_, i) => {
+          const factor = Math.sin((i / (barCount - 1)) * Math.PI)
+          
+          let targetHeight = 4
+          if (isSpeaking) {
+            const randomFactor = 0.4 + Math.random() * 0.6
+            targetHeight = 4 + level * 70 * factor * randomFactor
+          } else {
+            const time = Date.now() * 0.006
+            const sineWave = Math.sin(time + i * 0.3)
+            targetHeight = 4 + Math.max(0, sineWave * 8 * factor)
+          }
+
+          return Math.max(4, Math.min(32, targetHeight))
         })
       })
-    }, 16)
+    }, 20)
 
     return () => clearInterval(interval)
-  }, [level, isPaused])
+  }, [level, isPaused, isSpeaking])
 
   return (
-    <div className="flex items-center justify-center gap-1.5 h-20 select-none bg-white/[0.01] border border-white/5 rounded-2xl p-6 backdrop-blur-md shadow-inner w-full max-w-[260px]">
+    <div className="flex items-center justify-center gap-[3px] h-9 px-2 w-[180px] overflow-hidden select-none">
       {heights.map((h, i) => (
         <motion.div
           key={i}
-          className="w-1.5 rounded-full bg-gradient-to-t from-blue-600 via-cyan-400 to-blue-400"
+          className="w-[2px] rounded-full bg-gradient-to-t from-blue-500 to-cyan-400"
           animate={{ height: h }}
-          transition={{ type: 'spring', stiffness: 350, damping: 25 }}
+          transition={{ type: 'spring', stiffness: 450, damping: 25 }}
         />
       ))}
     </div>
   )
 }
 
-function App(): React.JSX.Element {
-  const [isOnboardingCompleted, setIsOnboardingCompleted] = useState(() => {
-    return localStorage.getItem('voicefloo-onboarding-completed') === 'true'
-  })
+const formatTimer = (secs: number) => {
+  const m = Math.floor(secs / 60).toString().padStart(2, '0')
+  const s = (secs % 60).toString().padStart(2, '0')
+  return `${m}:${s}`
+}
 
+function App(): React.JSX.Element {
   // Sync state with AudioEngine
-  const [micState, setMicState] = useState<'idle' | 'recording' | 'paused' | 'error' | 'processing'>('idle')
+  const [micState, setMicState] = useState<'idle' | 'recording' | 'paused' | 'error' | 'processing' | 'success'>('idle')
   const [liveLevel, setLiveLevel] = useState(0)
   const [duration, setDuration] = useState(0)
 
@@ -82,8 +85,6 @@ function App(): React.JSX.Element {
     percent: 0
   })
 
-  // Live Transcription outputs
-  const [liveTranscript, setLiveTranscript] = useState('')
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isVadSilenced, setIsVadSilenced] = useState(false)
 
@@ -98,11 +99,9 @@ function App(): React.JSX.Element {
   // Device list states
   const [devicesList, setDevicesList] = useState<AudioInputDevice[]>([])
   const [selectedDeviceId, setSelectedDeviceId] = useState('default')
-  const [selectedDeviceLabel, setSelectedDeviceLabel] = useState('Default Microphone')
 
   // Overlay states
   const [showSettings, setShowSettings] = useState(false)
-  const [showHistory, setShowHistory] = useState(false)
   const [showPermissionError, setShowPermissionError] = useState(false)
 
   // Settings states
@@ -115,6 +114,7 @@ function App(): React.JSX.Element {
 
   // Refs to prevent stale closures inside global event subscriptions
   const targetWindowRef = React.useRef<{ pid: number; executable: string; title: string } | null>(null)
+  
   const handleMicClickRef = React.useRef<any>(null)
   
   targetWindowRef.current = targetWindow
@@ -129,25 +129,9 @@ function App(): React.JSX.Element {
   const [cpuThreads, setCpuThreads] = useState(4)
   const [vadEnabled, setVadEnabled] = useState(true)
 
-  // Auto Updater settings & status
-  const [autoCheckUpdates, setAutoCheckUpdates] = useState(true)
-  const [autoDownloadUpdates, setAutoDownloadUpdates] = useState(false)
-  const [releaseChannel, setReleaseChannel] = useState<'stable' | 'beta' | 'dev'>('stable')
-  const [updateState, setUpdateState] = useState<'idle' | 'checking' | 'available' | 'downloading' | 'downloaded' | 'not-available' | 'error'>('idle')
-  const [updateProgress, setUpdateProgress] = useState<any>(null)
-  const [availableUpdateInfo, setAvailableUpdateInfo] = useState<any>(null)
-  const [updateErrorMessage, setUpdateErrorMessage] = useState('')
-
   // Visual transitions state
   const [isRendered, setIsRendered] = useState(true)
   const [isFadingOut, setIsFadingOut] = useState(false)
-
-  // Transcription history state
-  const [historyItems, setHistoryItems] = useState([
-    { id: 1, text: 'This is a premium desktop dictation utility built using Electron, React, and Tailwind CSS v4.', time: '2 mins ago' },
-    { id: 2, text: 'Ensure the window transparency and always-on-top flags are working correctly.', time: '1 hour ago' },
-    { id: 3, text: 'Bootstrapping VoiceFloo with clean React components and TypeScript types.', time: 'Yesterday' }
-  ])
 
   // Sync Input Engine options with the main process on change
   useEffect(() => {
@@ -160,52 +144,25 @@ function App(): React.JSX.Element {
     })
   }, [inputStrategy, typingSpeed, autoRestoreClipboard, delayBeforeTyping, voiceCommandsEnabled])
 
-  // Sync auto-updater settings with the main process on change
+  // Initial event bindings
   useEffect(() => {
-    window.api.setUpdateSettings({
-      autoCheck: autoCheckUpdates,
-      autoDownload: autoDownloadUpdates,
-      channel: releaseChannel
-    })
-  }, [autoCheckUpdates, autoDownloadUpdates, releaseChannel])
-
-  // Initialize and register audio & speech listeners
-  useEffect(() => {
-    // 1. Check Whisper and Model states
-    window.api.isWhisperReady().then((ready) => {
-      setIsWhisperReady(ready)
-    })
-
-    window.api.getModelsList().then((list) => {
-      setModelsList(list)
-    })
-
-    // 2. Diagnostics setup for audio inputs
-    audioEngine.initialize().then(() => {
-      setDevicesList(audioEngine.devices.getDevices())
-      setSelectedDeviceId(audioEngine.devices.getSelectedDeviceId())
-      updateDeviceLabel(audioEngine.devices.getSelectedDeviceId(), audioEngine.devices.getDevices())
-    })
-
-    // 3. Window transition listeners
+    // 1. Fade-in handler on startup/show
     const removeFadeIn = window.api.onWindowFadeIn(() => {
       setIsFadingOut(false)
       setIsRendered(true)
     })
 
+    // 2. Fade-out trigger
     const removeFadeOut = window.api.onWindowFadeOut(() => {
       setIsFadingOut(true)
     })
 
+    // 3. Open settings trigger
     const removeOpenSettings = window.api.onOpenSettings(() => {
       setShowSettings(true)
-      setIsFadingOut(false)
-      setIsRendered(true)
-    })
-
-    // Read startup configuration
-    window.api.getStartupStatus().then((status) => {
-      setLaunchAtStartup(status)
+      window.api.getStartupStatus().then((status) => {
+        setLaunchAtStartup(status)
+      })
     })
 
     // 4. Download IPC event subscriptions
@@ -225,41 +182,18 @@ function App(): React.JSX.Element {
     }
     const unsubSuccess = window.api.onDownloadSuccess(removeDownloadSuccess)
 
-    const removeDownloadError = (errorMsg: string) => {
-      setDownloadState({ isDownloading: false, type: 'model', percent: 0 })
-      alert(`Installation failed: ${errorMsg}`)
-    }
-    const unsubError = window.api.onDownloadError(removeDownloadError)
-
     // 5. Audio & Speech event bindings
-    const handleLevelChanged = (level: number) => {
-      setLiveLevel(level)
-    }
-
-    const handleDurationUpdated = (secs: number) => {
-      setDuration(secs)
-    }
-
-    const handlePermissionDenied = () => {
-      setShowPermissionError(true)
-      setMicState('error')
-    }
-
     const handleDeviceChanged = (deviceId: string) => {
       setSelectedDeviceId(deviceId)
       const list = audioEngine.devices.getDevices()
       setDevicesList(list)
-      updateDeviceLabel(deviceId, list)
     }
 
     const handleDevicesUpdated = (list: AudioInputDevice[]) => {
       setDevicesList(list)
-      updateDeviceLabel(audioEngine.devices.getSelectedDeviceId(), list)
     }
 
     const handleTranscriptUpdated = (text: string) => {
-      setLiveTranscript(text)
-      // Stream incremental keystrokes live to the target window
       window.api.injectTextInput(text, false, targetWindowRef.current?.pid)
     }
 
@@ -273,9 +207,9 @@ function App(): React.JSX.Element {
       setIsVadSilenced(true)
     }
 
-    audioEngine.events.on('AudioLevelChanged', handleLevelChanged)
-    audioEngine.events.on('RecordingDurationUpdated', handleDurationUpdated)
-    audioEngine.events.on('PermissionDenied', handlePermissionDenied)
+    audioEngine.events.on('AudioLevelChanged', (level: number) => setLiveLevel(level))
+    audioEngine.events.on('RecordingDurationUpdated', (secs: number) => setDuration(secs))
+    audioEngine.events.on('PermissionDenied', () => { setShowPermissionError(true); setMicState('error') })
     audioEngine.events.on('DeviceChanged', handleDeviceChanged)
     audioEngine.events.on('DevicesUpdated', handleDevicesUpdated)
 
@@ -295,60 +229,8 @@ function App(): React.JSX.Element {
       removeOpenSettings()
       removeDownloadProgress()
       unsubSuccess()
-      unsubError()
       removeGlobalShortcutPress()
-
-      audioEngine.events.off('AudioLevelChanged', handleLevelChanged)
-      audioEngine.events.off('RecordingDurationUpdated', handleDurationUpdated)
-      audioEngine.events.off('PermissionDenied', handlePermissionDenied)
-      audioEngine.events.off('DeviceChanged', handleDeviceChanged)
-      audioEngine.events.off('DevicesUpdated', handleDevicesUpdated)
-
       audioEngine.events.off('TranscriptUpdated', handleTranscriptUpdated)
-      audioEngine.events.off('SpeechActive', handleSpeechActive)
-      audioEngine.events.off('SilenceDetected', handleSilenceDetected)
-    }
-  }, [language])
-
-  // Register auto-updater IPC event listeners
-  useEffect(() => {
-    const removeChecking = window.api.onUpdateChecking(() => {
-      setUpdateState('checking')
-      setUpdateErrorMessage('')
-    })
-
-    const removeAvailable = window.api.onUpdateAvailable((info: any) => {
-      setUpdateState('available')
-      setAvailableUpdateInfo(info)
-    })
-
-    const removeNotAvailable = window.api.onUpdateNotAvailable(() => {
-      setUpdateState('not-available')
-      setTimeout(() => setUpdateState('idle'), 4000)
-    })
-
-    const removeProgress = window.api.onUpdateProgress((progress: any) => {
-      setUpdateState('downloading')
-      setUpdateProgress(progress)
-    })
-
-    const removeDownloaded = window.api.onUpdateDownloaded((info: any) => {
-      setUpdateState('downloaded')
-      setAvailableUpdateInfo(info)
-    })
-
-    const removeError = window.api.onUpdateError((errMsg: string) => {
-      setUpdateState('error')
-      setUpdateErrorMessage(errMsg)
-    })
-
-    return () => {
-      removeChecking()
-      removeAvailable()
-      removeNotAvailable()
-      removeProgress()
-      removeDownloaded()
-      removeError()
     }
   }, [])
 
@@ -363,7 +245,6 @@ function App(): React.JSX.Element {
       })
       audioEngine.devices.refreshDevices().then((list) => {
         setDevicesList(list)
-        updateDeviceLabel(audioEngine.devices.getSelectedDeviceId(), list)
       })
     }
   }, [showSettings])
@@ -378,15 +259,6 @@ function App(): React.JSX.Element {
     })
   }, [activeModelId, language, cpuThreads, vadEnabled])
 
-  const updateDeviceLabel = (deviceId: string, list: AudioInputDevice[]) => {
-    const matched = list.find(d => d.deviceId === deviceId)
-    if (matched) {
-      setSelectedDeviceLabel(matched.label)
-    } else {
-      setSelectedDeviceLabel(deviceId === 'default' ? 'Default Microphone' : 'Selected Mic')
-    }
-  }
-
   // Model Download triggers
   const handleStartModelDownload = async () => {
     try {
@@ -395,11 +267,6 @@ function App(): React.JSX.Element {
     } catch (err: any) {
       console.error(err)
     }
-  }
-
-  const handleCancelDownload = () => {
-    window.api.cancelDownload()
-    setDownloadState({ isDownloading: false, type: 'model', percent: 0 })
   }
 
   // Handle Startup status switch click
@@ -411,43 +278,65 @@ function App(): React.JSX.Element {
     }
   }
 
-  // Handle Microphone device selection change
   const handleDeviceSelect = async (deviceId: string) => {
+    setSelectedDeviceId(deviceId)
     await audioEngine.devices.selectDevice(deviceId)
   }
 
+  const handlePauseRecording = () => {
+    audioEngine.pauseRecording()
+    speechEngine.pauseRecording()
+    setMicState('paused')
+    setIsSpeaking(false)
+  }
+
+  const handleResumeRecording = () => {
+    audioEngine.resumeRecording()
+    speechEngine.resumeRecording()
+    setMicState('recording')
+  }
+
+  const handleCancelRecording = () => {
+    audioEngine.cancelRecording()
+    speechEngine.cancelSession()
+    setMicState('idle')
+    setIsSpeaking(false)
+    setIsVadSilenced(false)
+    window.api.setOverlayMode(false)
+    window.api.close()
+  }
+
+  const handleRetryPermission = async () => {
+    setShowPermissionError(false)
+    setMicState('idle')
+    await handleMicClick()
+  }
+
+  const handleCancelDownload = () => {
+    window.api.cancelDownload()
+    setDownloadState({ isDownloading: false, type: 'model', percent: 0 })
+  }
+
   // Toggle Dictation session
-  const handleMicClick = async (shortcutWin?: any) => {
-    if (!isWhisperReady) {
-      return
-    }
+  const handleMicClick = async () => {
+    if (!isWhisperReady) return
 
     if (micState === 'idle' || micState === 'error') {
       try {
         setDuration(0)
         setLiveLevel(0)
-        setLiveTranscript('')
         setIsSpeaking(false)
         setIsVadSilenced(false)
         setTargetWindow(null)
 
-        // Reset the typing buffer session
         window.api.resetInputSession()
         
-        // Grab foreground active window metadata before focus shifts
-        let win = shortcutWin
-        if (!win || win.executable === 'VoiceFloo.exe' || win.executable === 'unknown') {
-          win = await window.api.getActiveWindow()
-        }
-        
+        let win = await window.api.getActiveWindow()
         if (win && win.executable !== 'VoiceFloo.exe' && win.executable !== 'unknown') {
           setTargetWindow(win)
         }
 
-        // Switch to tiny floating overlay layout
         window.api.setOverlayMode(true)
-
-        // Restore focus to the target editor application immediately
         if (win && win.pid) {
           window.api.injectTextInput('', false, win.pid)
         }
@@ -471,104 +360,33 @@ function App(): React.JSX.Element {
   // Update handler ref on every render to prevent React closure staleness
   handleMicClickRef.current = handleMicClick
 
-  // Control Actions
-  const handlePauseRecording = () => {
-    audioEngine.pauseRecording()
-    speechEngine.pauseRecording()
-    setMicState('paused')
-    setIsSpeaking(false)
-  }
-
-  const handleResumeRecording = () => {
-    audioEngine.resumeRecording()
-    speechEngine.resumeRecording()
-    setMicState('recording')
-  }
-
   const handleStopRecording = async () => {
-    // 1. Stop audio capture
     await audioEngine.stopRecording()
     setMicState('processing')
     setIsSpeaking(false)
     setIsVadSilenced(false)
 
-    // 2. Compile final transcription
     const finalText = await speechEngine.stopSession()
 
-    // 3. Trigger final paste strategy insertion with active window PID
     if (finalText && finalText.trim().length > 0) {
-      await window.api.injectTextInput(finalText, true, targetWindowRef.current?.pid) // isFinal = true
-      
-      setHistoryItems(prev => [
-        {
-          id: Date.now(),
-          text: finalText,
-          time: 'Just now'
-        },
-        ...prev
-      ])
+      await window.api.injectTextInput(finalText, true, targetWindowRef.current?.pid)
+      setMicState('success')
+      await new Promise((resolve) => setTimeout(resolve, 1500))
     }
 
     setMicState('idle')
-    // 4. Return to normal bounds in background and close to tray
     window.api.setOverlayMode(false)
     window.api.close()
-  }
-
-  const handleCancelRecording = () => {
-    audioEngine.cancelRecording()
-    speechEngine.cancelSession()
-    setMicState('idle')
-    setIsSpeaking(false)
-    setIsVadSilenced(false)
-
-    // Reset overlay mode and close/hide window
-    window.api.setOverlayMode(false)
-    window.api.close()
-  }
-
-  const handleRetryPermission = async () => {
-    setShowPermissionError(false)
-    setMicState('idle')
-    await handleMicClick()
   }
 
   const handleOpenSystemSettings = () => {
     window.api.openSystemSettings()
   }
 
-  const deleteHistoryItem = (id: number) => {
-    setHistoryItems((prev) => prev.filter(item => item.id !== id))
-  }
-
-  // Timer Formatter helper
-  const formatTimer = (secs: number) => {
-    const m = Math.floor(secs / 60).toString().padStart(2, '0')
-    const s = (secs % 60).toString().padStart(2, '0')
-    return `${m}:${s}`
-  }
-
-  // Wizard details selector
-  const selectedModelDetails = modelsList.find(m => m.id === wizardModelId)
-
-  // Animation variants
-  const containerVariants: any = {
-    hidden: { opacity: 0, scale: 0.98 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { duration: 0.25, ease: [0.16, 1, 0.3, 1] as const } 
-    },
-    exit: { 
-      opacity: 0, 
-      transition: { duration: 0.18, ease: "easeIn" as const } 
-    }
-  }
-
   return (
     <div className="relative w-screen h-screen p-2.5 flex items-center justify-center bg-transparent overflow-hidden">
-      {/* Animated Liquid Background behind the Glass Container */}
-      <AnimatedBackground />
+      {/* Animated Liquid Background only in Settings mode */}
+      {showSettings && <AnimatedBackground />}
 
       <AnimatePresence 
         onExitComplete={() => {
@@ -577,878 +395,474 @@ function App(): React.JSX.Element {
           }
         }}
       >
-        {!isOnboardingCompleted ? (
-          <OnboardingWizard 
-            onComplete={() => {
-              localStorage.setItem('voicefloo-onboarding-completed', 'true')
-              setIsOnboardingCompleted(true)
-            }}
-          />
-        ) : (
-          isRendered && !isFadingOut && (
+        {isRendered && !isFadingOut && (
+          showSettings ? (
+            /* STANDALONE SETTINGS WINDOW VIEW */
             <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="w-full h-full relative"
+              key="settings-window"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-full h-full flex flex-col bg-[#0A0F1E]/95 border border-white/10 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl overflow-hidden select-none relative"
             >
-              {micState === 'recording' || micState === 'paused' || micState === 'processing' ? (
-                /* 1. Tiny Floating Overlay Layout */
-                <motion.div 
-                  className="w-full h-full flex items-center justify-between bg-[#0F1422]/90 border border-white/10 rounded-2xl px-4 py-2 shadow-[0_4px_30px_rgba(0,0,0,0.4)] backdrop-blur-xl select-none"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
+              {/* Settings Header with custom title & Drag region */}
+              <div 
+                className="h-14 border-b border-white/5 flex items-center justify-between px-5 select-none shrink-0"
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-blue-400" />
+                  <span className="text-xs font-bold text-white tracking-wide">VoiceFloo Settings</span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setShowSettings(false)
+                    window.api.setOverlayMode(false) // dynamically hides the settings window
+                  }}
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-white/50 hover:text-white transition-all cursor-pointer"
+                  style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                 >
-                  {/* Left: Indicator & Timer */}
-                  <div className="flex items-center gap-2">
-                    <span className={`w-2.5 h-2.5 rounded-full ${micState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
-                    <span className="text-xs font-bold text-white/80 font-mono">{formatTimer(duration)}</span>
-                  </div>
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
 
-                  {/* Center: Waveform/Status */}
-                  <div className="flex-1 flex items-center justify-center px-3">
-                    {micState === 'processing' ? (
-                      <span className="text-[10px] font-bold text-blue-300 tracking-wide uppercase animate-pulse flex items-center gap-1.5">
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" /> Processing
-                      </span>
+              {/* Settings Content Area */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6 text-left">
+                {/* 1. Global Shortcut */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Global Shortcut Trigger</label>
+                    <span className="px-1.5 py-0.5 rounded bg-white/5 text-white/40 text-[9px] font-mono border border-white/5">Accelerator</span>
+                  </div>
+                  <input 
+                    type="text" 
+                    value={shortcut} 
+                    onChange={(e) => setShortcut(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50" 
+                  />
+                  <p className="text-[10px] text-white/35">Global key combination to summon the floating recording overlay pill instantly.</p>
+                </div>
+
+                {/* 2. Launch on Startup */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-5">
+                  <div className="space-y-0.5 pr-4">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Launch on Startup</label>
+                    <p className="text-[10px] text-white/40 leading-relaxed">Start VoiceFloo automatically when logging into Windows.</p>
+                  </div>
+                  <button 
+                    onClick={handleToggleStartup} 
+                    className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                  >
+                    {launchAtStartup ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9 text-white/20" />}
+                  </button>
+                </div>
+
+                {/* 3. Input Microphone */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Input Device (Microphone)</label>
+                  <select
+                    value={selectedDeviceId}
+                    onChange={(e) => handleDeviceSelect(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                  >
+                    {devicesList.length === 0 ? (
+                      <option value="default" className="bg-[#0A0F1E]">Default Microphone</option>
                     ) : (
-                      <div className="flex items-center gap-1">
-                        {Array.from({ length: 9 }).map((_, i) => {
-                          const h = 4 + liveLevel * 32 * Math.sin((i / 8) * Math.PI) * (0.6 + Math.random() * 0.4);
-                          return (
-                            <motion.div
-                              key={i}
-                              className="w-1 rounded-full bg-gradient-to-t from-blue-600 via-cyan-400 to-blue-400"
-                              animate={{ height: Math.max(4, Math.min(28, h)) }}
-                              transition={{ type: 'spring', stiffness: 350, damping: 25 }}
-                            />
-                          );
-                        })}
-                      </div>
+                      devicesList.map((device) => (
+                        <option key={device.deviceId} value={device.deviceId} className="bg-[#0A0F1E]">
+                          {device.label}
+                        </option>
+                      ))
                     )}
-                  </div>
+                  </select>
+                </div>
 
-                  {/* Right: Actions */}
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={handleCancelRecording}
-                      className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-red-400 transition-colors cursor-pointer"
-                      title="Discard"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                {/* 4. Active AI Model */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-sans">Whisper AI Model</label>
+                  <select
+                    value={activeModelId}
+                    onChange={(e) => {
+                      setActiveModelId(e.target.value)
+                      const selected = modelsList.find(m => m.id === e.target.value)
+                      if (selected) {
+                        setWizardModelId(selected.id)
+                        setIsWhisperReady(selected.installed)
+                      }
+                    }}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  >
+                    {modelsList.map((model) => (
+                      <option key={model.id} value={model.id} className="bg-[#0A0F1E]">
+                        {model.name} {model.installed ? '(Installed)' : '(Download required)'}
+                      </option>
+                    ))}
+                  </select>
 
-                    {micState === 'recording' ? (
-                      <button 
-                        onClick={handlePauseRecording}
-                        className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-amber-400 transition-colors cursor-pointer"
-                        title="Pause"
-                      >
-                        <Pause className="w-3.5 h-3.5" />
-                      </button>
-                    ) : (
-                      micState === 'paused' && (
-                        <button 
-                          onClick={handleResumeRecording}
-                          className="p-1.5 rounded-full hover:bg-white/5 text-white/40 hover:text-emerald-400 transition-colors cursor-pointer"
-                          title="Resume"
-                        >
-                          <Play className="w-3.5 h-3.5" />
-                        </button>
-                      )
-                    )}
-
-                    <button 
-                      onClick={handleStopRecording}
-                      className="p-1.5 rounded-full bg-blue-600/10 hover:bg-blue-600/25 border border-blue-500/20 text-blue-300 hover:text-white transition-all cursor-pointer"
-                      title="Finish"
-                    >
-                      <Check className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </motion.div>
-              ) : (
-                /* 2. Normal Full Panel Card Layout */
-                <GlassCard className="w-full h-full flex flex-col justify-between select-none">
-              
-              {/* Top title bar */}
-              <TitleBar />
-
-              {/* Dynamic content view wrapper */}
-              <div className="relative flex-1 overflow-hidden">
-                
-                <AnimatePresence mode="sync">
-                  {/* Overlay 1: Settings Panel */}
-                  {showSettings && (
-                    <motion.div
-                      initial={{ x: '100%' }}
-                      animate={{ x: 0 }}
-                      exit={{ x: '100%' }}
-                      transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                      className="absolute inset-0 bg-[#0F1422]/95 backdrop-blur-2xl z-40 flex flex-col p-6 overflow-y-auto"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center gap-3 mb-6">
-                        <button 
-                          onClick={() => setShowSettings(false)}
-                          className="p-1.5 rounded-full hover:bg-white/5 text-white/70 hover:text-white cursor-pointer"
-                        >
-                          <ArrowLeft className="w-4 h-4" />
-                        </button>
-                        <h2 className="text-md font-bold text-white tracking-wide">Settings</h2>
+                  {/* Model Download Progress Section */}
+                  {modelsList.find(m => m.id === activeModelId && !m.installed) && (
+                    <div className="p-3.5 rounded-xl border border-white/5 bg-white/[0.01] space-y-3 mt-3">
+                      <div className="flex justify-between text-[10px] font-medium">
+                        <span className="text-white/45 font-sans">Model Size:</span>
+                        <span className="text-white font-semibold">{modelsList.find(m => m.id === activeModelId)?.size}</span>
                       </div>
-
-                      {/* Settings list */}
-                      <div className="space-y-5 text-left flex-1">
-                        
-                        {/* Settings Item: Global Shortcut */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Global Toggle Shortcut</label>
-                          <div className="flex gap-2">
-                            <input 
-                              type="text" 
-                              value={shortcut} 
-                              onChange={(e) => setShortcut(e.target.value)}
-                              className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50" 
-                            />
-                          </div>
-                        </div>
-
-                        {/* Settings Item: Launch on Startup */}
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <div className="space-y-0.5">
-                            <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Launch on Startup</label>
-                            <p className="text-[10px] text-white/50">Start VoiceFloo automatically when you log in</p>
-                          </div>
-                          <button 
-                            onClick={handleToggleStartup} 
-                            className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                          >
-                            {launchAtStartup ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                          </button>
-                        </div>
-
-                        {/* Settings Item: Input Microphone selection */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Input Microphone</label>
-                          <select
-                            value={selectedDeviceId}
-                            onChange={(e) => handleDeviceSelect(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                          >
-                            {devicesList.length === 0 ? (
-                              <option value="default" className="bg-[#0F1422]">Default Microphone</option>
-                            ) : (
-                              devicesList.map((device) => (
-                                <option key={device.deviceId} value={device.deviceId} className="bg-[#0F1422]">
-                                  {device.label}
-                                </option>
-                              ))
-                            )}
-                          </select>
-                        </div>
-
-                        {/* Settings Item: Active AI Model */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Active AI Model</label>
-                          <select
-                            value={activeModelId}
-                            onChange={(e) => {
-                              setActiveModelId(e.target.value)
-                              const selected = modelsList.find(m => m.id === e.target.value)
-                              if (selected && !selected.installed) {
-                                setWizardModelId(selected.id)
-                                setIsWhisperReady(false)
-                              }
-                            }}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                          >
-                            {modelsList.map((model) => (
-                              <option key={model.id} value={model.id} className="bg-[#0F1422]">
-                                {model.name} {model.installed ? '(Installed)' : '(Download required)'}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Settings Item: Input Insertion Strategy */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Typing Insertion Strategy</label>
-                          <select
-                            value={inputStrategy}
-                            onChange={(e) => setInputStrategy(e.target.value as any)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                          >
-                            <option value="auto" className="bg-[#0F1422]">Automatic Selection (Recommended)</option>
-                            <option value="keyboard" className="bg-[#0F1422]">Native Keyboard Emulation (Live Streaming)</option>
-                            <option value="clipboard" className="bg-[#0F1422]">Clipboard Copy-Paste (Instant Overlays)</option>
-                          </select>
-                        </div>
-
-                        {/* Settings Item: Voice Commands Toggle */}
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <div className="space-y-0.5">
-                            <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Voice Commands</label>
-                            <p className="text-[10px] text-white/50">Execute shortcuts like "new line" vocally</p>
-                          </div>
-                          <button 
-                            onClick={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)} 
-                            className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                          >
-                            {voiceCommandsEnabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                          </button>
-                        </div>
-
-                        {/* Settings Item: Auto Restore Clipboard Toggle */}
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <div className="space-y-0.5">
-                            <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Auto Restore Clipboard</label>
-                            <p className="text-[10px] text-white/50">Restore original clipboard content after pasting transcripts</p>
-                          </div>
-                          <button 
-                            onClick={() => setAutoRestoreClipboard(!autoRestoreClipboard)} 
-                            className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                          >
-                            {autoRestoreClipboard ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                          </button>
-                        </div>
-
-                        {/* Settings Item: Typing Delay Speed */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <div className="flex justify-between text-[10px] font-bold text-white/40 tracking-wider uppercase">
-                            <span>Character Typing Delay</span>
-                            <span className="text-blue-400">{typingSpeed} ms</span>
-                          </div>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="50" 
-                            value={typingSpeed} 
-                            onChange={(e) => setTypingSpeed(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500" 
-                          />
-                        </div>
-
-                        {/* Settings Item: Startup Delay Before Typing */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <div className="flex justify-between text-[10px] font-bold text-white/40 tracking-wider uppercase">
-                            <span>Startup Delay Before Typing</span>
-                            <span className="text-blue-400">{delayBeforeTyping} ms</span>
-                          </div>
-                          <input 
-                            type="range" 
-                            min="0" 
-                            max="200" 
-                            value={delayBeforeTyping} 
-                            onChange={(e) => setDelayBeforeTyping(Number(e.target.value))}
-                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-500" 
-                          />
-                        </div>
-
-                        {/* Settings Item: VAD Toggle */}
-                        <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                          <div className="space-y-0.5">
-                            <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Silence Detection (VAD)</label>
-                            <p className="text-[10px] text-white/50">Auto-pause transcription when silence is detected</p>
-                          </div>
-                          <button 
-                            onClick={() => setVadEnabled(!vadEnabled)} 
-                            className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                          >
-                            {vadEnabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                          </button>
-                        </div>
-
-                        {/* Settings Item: CPU Threads */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Inference CPU Threads</label>
-                          <select
-                            value={cpuThreads}
-                            onChange={(e) => setCpuThreads(Number(e.target.value))}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                          >
-                            {[2, 4, 6, 8, 12].map(t => (
-                              <option key={t} value={t} className="bg-[#0F1422]">{t} Threads</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Settings Item: AI formatting Mode */}
-                        <div className="space-y-1.5 border-b border-white/5 pb-4">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">AI Post-Processing</label>
-                          <div className="grid grid-cols-3 gap-2">
-                            {['Raw text', 'Smart Format', 'Bullet Points'].map((mode) => (
-                              <button
-                                key={mode}
-                                onClick={() => setAiMode(mode)}
-                                className={`py-1.5 text-[10px] font-bold rounded-lg border cursor-pointer transition-all duration-200 ${
-                                  aiMode === mode 
-                                    ? 'bg-blue-600/20 border-blue-500/50 text-blue-200 shadow-md' 
-                                    : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
-                                }`}
-                              >
-                                {mode}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Settings Item: Transcription Language */}
-                        <div className="space-y-1.5">
-                          <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Transcription Language</label>
-                          <select
-                            value={language}
-                            onChange={(e) => setLanguage(e.target.value)}
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                          >
-                            <option value="AUTO" className="bg-[#0F1422]">Auto Detect Language</option>
-                            <option value="EN" className="bg-[#0F1422]">English</option>
-                            <option value="ES" className="bg-[#0F1422]">Spanish (Español)</option>
-                            <option value="FR" className="bg-[#0F1422]">French (Français)</option>
-                            <option value="DE" className="bg-[#0F1422]">German (Deutsch)</option>
-                            <option value="JA" className="bg-[#0F1422]">Japanese (日本語)</option>
-                            <option value="ZH" className="bg-[#0F1422]">Chinese (中文)</option>
-                            <option value="HI" className="bg-[#0F1422]">Hindi (हिन्दी)</option>
-                            <option value="KN" className="bg-[#0F1422]">Kannada (ಕನ್ನಡ)</option>
-                            <option value="UR" className="bg-[#0F1422]">Urdu (اردو)</option>
-                          </select>
-                        </div>
-
-                        {/* Settings Group: Auto Updates */}
-                        <div className="space-y-4 pt-2">
-                          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Check For Updates</label>
-                              <p className="text-[10px] text-white/50">Automatically check for updates on startup</p>
-                            </div>
-                            <button 
-                              onClick={() => setAutoCheckUpdates(!autoCheckUpdates)} 
-                              className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                            >
-                              {autoCheckUpdates ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                            </button>
-                          </div>
-
-                          <div className="flex items-center justify-between border-b border-white/5 pb-4">
-                            <div className="space-y-0.5">
-                              <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Auto Download Updates</label>
-                              <p className="text-[10px] text-white/50">Automatically download updates in the background</p>
-                            </div>
-                            <button 
-                              onClick={() => setAutoDownloadUpdates(!autoDownloadUpdates)} 
-                              className="text-blue-400 hover:text-blue-300 cursor-pointer"
-                            >
-                              {autoDownloadUpdates ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-white/20" />}
-                            </button>
-                          </div>
-
-                          <div className="space-y-1.5 border-b border-white/5 pb-4">
-                            <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Release Channel</label>
-                            <select
-                              value={releaseChannel}
-                              onChange={(e) => setReleaseChannel(e.target.value as any)}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                            >
-                              <option value="stable" className="bg-[#0F1422]">Stable (Recommended)</option>
-                              <option value="beta" className="bg-[#0F1422]">Beta (Pre-release testing)</option>
-                              <option value="dev" className="bg-[#0F1422]">Development (Bleeding-edge builds)</option>
-                            </select>
-                          </div>
-
-                          {/* Live Update Status View */}
-                          <div className="p-3.5 rounded-xl border border-white/5 bg-white/[0.01] space-y-3">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-white/40 uppercase">Update Status</span>
-                              <span className="text-[10px] text-white/60 font-semibold font-mono">v1.0.0</span>
-                            </div>
-
-                            {updateState === 'idle' && (
-                              <button
-                                onClick={() => window.api.checkForUpdates(true)}
-                                className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer"
-                              >
-                                Check for Updates
-                              </button>
-                            )}
-
-                            {updateState === 'checking' && (
-                              <div className="flex items-center justify-center gap-2 py-1.5 text-xs text-white/50">
-                                <Loader2 className="w-4 h-4 animate-spin text-blue-400" />
-                                <span>Checking for updates...</span>
-                              </div>
-                            )}
-
-                            {updateState === 'available' && (
-                              <div className="space-y-2">
-                                <p className="text-[11px] text-blue-300 font-semibold">
-                                  New version v{availableUpdateInfo?.version} is available!
-                                </p>
-                                <button
-                                  onClick={() => window.api.downloadUpdate()}
-                                  className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer"
-                                >
-                                  Download Update
-                                </button>
-                              </div>
-                            )}
-
-                            {updateState === 'downloading' && (
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-[10px] font-bold text-white/60 uppercase">
-                                  <span>Downloading update</span>
-                                  <span>{updateProgress?.percent}%</span>
-                                </div>
-                                <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                                  <div 
-                                    className="h-full bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
-                                    style={{ width: `${updateProgress?.percent || 0}%` }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-
-                            {updateState === 'downloaded' && (
-                              <div className="space-y-2">
-                                <p className="text-[11px] text-emerald-400 font-semibold">
-                                  Version v{availableUpdateInfo?.version} downloaded successfully!
-                                </p>
-                                <button
-                                  onClick={() => window.api.installAndRestartUpdate()}
-                                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer"
-                                >
-                                  Restart & Install Update
-                                </button>
-                              </div>
-                            )}
-
-                            {updateState === 'not-available' && (
-                              <p className="text-[10px] text-emerald-400 font-bold tracking-wide uppercase text-center animate-pulse">
-                                VoiceFloo is up to date!
-                              </p>
-                            )}
-
-                            {updateState === 'error' && (
-                              <div className="space-y-2">
-                                <p className="text-[10px] text-red-400 leading-normal">
-                                  {updateErrorMessage}
-                                </p>
-                                <button
-                                  onClick={() => window.api.checkForUpdates(true)}
-                                  className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer"
-                                >
-                                  Retry Update Check
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                      </div>
-
-                      {/* Footer disclaimer */}
-                      <div className="text-[9px] text-white/20 text-center mt-6">
-                        VoiceFloo v1.0.0 • Free & Open Source
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Overlay 2: History Panel */}
-                  {showHistory && (
-                    <motion.div
-                      initial={{ x: '-100%' }}
-                      animate={{ x: 0 }}
-                      exit={{ x: '-100%' }}
-                      transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-                      className="absolute inset-0 bg-[#0F1422]/95 backdrop-blur-2xl z-40 flex flex-col p-6 overflow-hidden"
-                    >
-                      {/* Header */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className="flex items-center gap-3">
-                          <button 
-                            onClick={() => setShowHistory(false)}
-                            className="p-1.5 rounded-full hover:bg-white/5 text-white/70 hover:text-white cursor-pointer"
-                          >
-                            <ArrowLeft className="w-4 h-4" />
-                          </button>
-                          <h2 className="text-md font-bold text-white tracking-wide">History</h2>
-                        </div>
-                        {historyItems.length > 0 && (
-                          <button 
-                            onClick={() => setHistoryItems([])}
-                            className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Clear All
-                          </button>
-                        )}
-                      </div>
-
-                      {/* History list */}
-                      <div className="flex-1 overflow-y-auto space-y-3 pr-1 text-left">
-                        {historyItems.length === 0 ? (
-                          <div className="h-full flex flex-col items-center justify-center text-center text-white/30 space-y-2">
-                            <Clock className="w-8 h-8 opacity-40" />
-                            <p className="text-xs">No transcription history yet</p>
-                          </div>
-                        ) : (
-                          historyItems.map((item) => (
-                            <div 
-                              key={item.id}
-                              className="group relative p-3.5 rounded-xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] transition-all duration-200"
-                            >
-                              <p className="text-xs text-white/80 line-clamp-4 leading-relaxed pr-6 select-text">
-                                "{item.text}"
-                              </p>
-                              <div className="flex items-center justify-between mt-2.5">
-                                <span className="text-[9px] text-white/30 font-medium">{item.time}</span>
-                                <button 
-                                  onClick={() => deleteHistoryItem(item.id)}
-                                  className="opacity-0 group-hover:opacity-100 text-white/30 hover:text-red-400 transition-opacity duration-150 cursor-pointer"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Overlay 3: Permission Denied Error Panel */}
-                  {showPermissionError && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute inset-0 bg-[#0F1422]/98 backdrop-blur-2xl z-50 flex flex-col items-center justify-center p-6 text-center select-none"
-                    >
-                      <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/35 flex items-center justify-center mb-5 text-red-400">
-                        <AlertCircle className="w-9 h-9 stroke-[1.5]" />
-                      </div>
-                      
-                      <h3 className="text-md font-bold text-white tracking-wide">
-                        Microphone Access Denied
-                      </h3>
-                      
-                      <p className="text-xs text-white/50 max-w-[280px] leading-relaxed mt-2.5">
-                        VoiceFloo needs access to your microphone to capture dictation. Please enable microphone permissions inside your operating system settings.
-                      </p>
-
-                      <div className="flex flex-col gap-2.5 w-full max-w-[240px] mt-7">
-                        <button
-                          onClick={handleRetryPermission}
-                          className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-xl cursor-pointer transition-colors shadow-md shadow-blue-900/30"
-                        >
-                          Retry Access
-                        </button>
-                        
-                        <button
-                          onClick={handleOpenSystemSettings}
-                          className="w-full bg-white/5 hover:bg-white/10 border border-white/10 text-white/80 hover:text-white text-xs font-bold py-2.5 rounded-xl cursor-pointer transition-colors"
-                        >
-                          Open System Settings
-                        </button>
-
-                        <button
-                          onClick={() => {
-                            setShowPermissionError(false)
-                            setMicState('idle')
-                          }}
-                          className="text-xs text-white/30 hover:text-white/60 font-semibold mt-1 transition-colors cursor-pointer"
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {/* Overlay 4: SETUP WIZARD FOR OFFLINE WHISPER AI SETUP */}
-                  {!isWhisperReady && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute inset-0 bg-[#0F1422]/99 backdrop-blur-3xl z-50 flex flex-col items-center justify-center p-6 text-center select-none"
-                    >
-                      <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500/25 via-cyan-400/25 to-purple-500/25 border border-white/10 flex items-center justify-center mb-5 text-blue-300 shadow-xl">
-                        <Sparkles className="w-8 h-8 text-blue-300" />
-                      </div>
-
-                      <h2 className="text-md font-bold text-white tracking-wide">Offline AI Setup Wizard</h2>
-                      <p className="text-[11px] text-white/50 max-w-[280px] leading-relaxed mt-2">
-                        VoiceFloo compiles and transcribes your audio completely offline. To start dictating, we need to install the core speech engine.
-                      </p>
-
                       {downloadState.isDownloading ? (
-                        <div className="w-full max-w-[240px] mt-8 space-y-3.5">
-                          <div className="flex justify-between text-[10px] font-bold text-white/60 uppercase tracking-wide">
-                            <span className="flex items-center gap-1.5">
-                              <Loader2 className="w-3.5 h-3.5 animate-spin text-blue-400" />
-                              {downloadState.type === 'binary' ? 'Downloading Engine' : 'Downloading Model'}
-                            </span>
-                            <span>{downloadState.percent}%</span>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-[9px] font-bold text-white/50">
+                            <span>Downloading {downloadState.percent}%</span>
                           </div>
-                          
-                          <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 relative">
-                            <motion.div
-                              className="h-full bg-gradient-to-r from-blue-500 via-cyan-400 to-indigo-500 rounded-full"
-                              initial={{ width: 0 }}
-                              animate={{ width: `${downloadState.percent}%` }}
-                              transition={{ duration: 0.1 }}
-                            />
+                          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+                            <div className="h-full bg-blue-500 rounded-full transition-all duration-200" style={{ width: `${downloadState.percent}%` }} />
                           </div>
-
-                          <p className="text-[9px] text-white/35 leading-normal text-left">
-                            {downloadState.type === 'binary' 
-                              ? 'Downloading pre-compiled whisper-blas-x64 binary executables from GitHub...' 
-                              : `Fetching GGML ${wizardModelId} model from Hugging Face servers (~${selectedModelDetails?.size})...`}
-                          </p>
-
-                          <button
+                          <button 
                             onClick={handleCancelDownload}
-                            className="text-[10px] font-bold text-red-400 hover:text-red-300 transition-colors uppercase pt-2.5 cursor-pointer block mx-auto"
+                            className="text-[9px] font-bold text-red-400 hover:text-red-300 cursor-pointer"
+                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
                           >
-                            Cancel Installation
+                            Cancel Download
                           </button>
                         </div>
                       ) : (
-                        <div className="w-full max-w-[250px] mt-6 space-y-4 text-left">
-                          <div className="space-y-1.5">
-                            <label className="text-[9px] font-bold text-white/40 uppercase tracking-widest">Select Whisper Model</label>
-                            <select
-                              value={wizardModelId}
-                              onChange={(e) => setWizardModelId(e.target.value)}
-                              className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
-                            >
-                              {modelsList.map((m) => (
-                                <option key={m.id} value={m.id} className="bg-[#0F1422]">
-                                  {m.name} ({m.size})
-                                </option>
-                              ))}
-                            </select>
-                          </div>
-
-                          {selectedModelDetails && (
-                            <div className="p-3 rounded-xl border border-white/5 bg-white/[0.01] space-y-1.5 text-[9px] select-text">
-                              <div className="flex justify-between"><span className="text-white/40 font-semibold">Download Size:</span><span className="text-white font-bold">{selectedModelDetails.size}</span></div>
-                              <div className="flex justify-between"><span className="text-white/40 font-semibold">Inference RAM:</span><span className="text-white font-bold">{selectedModelDetails.ramUsage}</span></div>
-                              <div className="flex justify-between"><span className="text-white/40 font-semibold">Inference Speed:</span><span className="text-cyan-400 font-bold">{selectedModelDetails.estimatedSpeed}</span></div>
-                            </div>
-                          )}
-
-                          <button
-                            onClick={handleStartModelDownload}
-                            className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2.5 rounded-xl transition-colors cursor-pointer shadow-md shadow-blue-900/30 text-center"
-                          >
-                            Download & Initialize
-                          </button>
-                        </div>
+                        <button
+                          onClick={handleStartModelDownload}
+                          className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-2 rounded-xl transition-colors cursor-pointer"
+                          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                        >
+                          Download Model ({modelsList.find(m => m.id === activeModelId)?.size})
+                        </button>
                       )}
+                    </div>
+                  )}
+                </div>
+
+                {/* 5. Typing Strategy */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Text Insertion Strategy</label>
+                  <select
+                    value={inputStrategy}
+                    onChange={(e) => setInputStrategy(e.target.value as any)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                  >
+                    <option value="auto" className="bg-[#0A0F1E]">Automatic (Recommended)</option>
+                    <option value="keyboard" className="bg-[#0A0F1E]">Keyboard Emulation (Live Typing)</option>
+                    <option value="clipboard" className="bg-[#0A0F1E]">Clipboard Strategy (Instant Paste)</option>
+                  </select>
+                </div>
+
+                {/* 6. CPU Threads */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Inference Threads</label>
+                  <select
+                    value={cpuThreads}
+                    onChange={(e) => setCpuThreads(Number(e.target.value))}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                  >
+                    {[2, 4, 6, 8, 12].map(t => (
+                      <option key={t} value={t} className="bg-[#0A0F1E]">{t} Threads</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 7. VAD Silence Detection */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-5">
+                  <div className="space-y-0.5 pr-4">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Silence Detection (VAD)</label>
+                    <p className="text-[10px] text-white/40 leading-relaxed">Automatically pause the recording when silence is detected.</p>
+                  </div>
+                  <button 
+                    onClick={() => setVadEnabled(!vadEnabled)} 
+                    className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  >
+                    {vadEnabled ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9 text-white/20" />}
+                  </button>
+                </div>
+
+                {/* 7a. Delay before typing */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-sans">Delay Before Typing</label>
+                    <span className="text-[10px] font-bold text-white/70 font-mono">{delayBeforeTyping} ms</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="10"
+                    max="500"
+                    step="10"
+                    value={delayBeforeTyping}
+                    onChange={(e) => setDelayBeforeTyping(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  />
+                </div>
+
+                {/* 7b. Typing Speed delay */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-sans">Char Typing Delay</label>
+                    <span className="text-[10px] font-bold text-white/70 font-mono">{typingSpeed} ms</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={typingSpeed}
+                    onChange={(e) => setTypingSpeed(Number(e.target.value))}
+                    className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-blue-500"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  />
+                </div>
+
+                {/* 7c. Auto Restore Clipboard */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-5">
+                  <div className="space-y-0.5 pr-4">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-sans">Restore Clipboard</label>
+                    <p className="text-[10px] text-white/40 leading-relaxed font-sans">Restore previous clipboard content automatically after typing.</p>
+                  </div>
+                  <button 
+                    onClick={() => setAutoRestoreClipboard(!autoRestoreClipboard)} 
+                    className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  >
+                    {autoRestoreClipboard ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9 text-white/20" />}
+                  </button>
+                </div>
+
+                {/* 7d. Voice Commands */}
+                <div className="flex items-center justify-between border-b border-white/5 pb-5">
+                  <div className="space-y-0.5 pr-4">
+                    <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase font-sans">Voice Commands</label>
+                    <p className="text-[10px] text-white/40 leading-relaxed font-sans">Recognize voice control commands like "undo", "newline".</p>
+                  </div>
+                  <button 
+                    onClick={() => setVoiceCommandsEnabled(!voiceCommandsEnabled)} 
+                    className="text-blue-400 hover:text-blue-300 cursor-pointer"
+                    style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                  >
+                    {voiceCommandsEnabled ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9 text-white/20" />}
+                  </button>
+                </div>
+
+                {/* 8. AI Formatting Mode */}
+                <div className="space-y-2 border-b border-white/5 pb-5">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">AI Post-Processing</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['Raw text', 'Smart Format', 'Bullet Points'].map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => setAiMode(mode)}
+                        className={`py-2 text-[10px] font-bold rounded-xl border cursor-pointer transition-all duration-200 ${
+                          aiMode === mode 
+                            ? 'bg-blue-600/20 border-blue-500/50 text-blue-200 shadow-md' 
+                            : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 9. Language Selector */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-white/40 tracking-wider uppercase">Dictation Language</label>
+                  <select
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500/50 cursor-pointer"
+                  >
+                    <option value="AUTO" className="bg-[#0A0F1E]">Auto Detect Language</option>
+                    <option value="EN" className="bg-[#0A0F1E]">English</option>
+                    <option value="ES" className="bg-[#0A0F1E]">Spanish (Español)</option>
+                    <option value="FR" className="bg-[#0A0F1E]">French (Français)</option>
+                    <option value="DE" className="bg-[#0A0F1E]">German (Deutsch)</option>
+                    <option value="JA" className="bg-[#0A0F1E]">Japanese (日本語)</option>
+                    <option value="ZH" className="bg-[#0A0F1E]">Chinese (中文)</option>
+                  </select>
+                </div>
+              </div>
+            </motion.div>
+          ) : (
+            /* DICTATION FLOATING PILL OVERLAY (State-dependent) */
+            (micState !== 'idle') && (
+              <motion.div 
+                key="dictation-pill-overlay"
+                className="w-full h-full flex items-center justify-between bg-[#0A0F1E]/88 border border-white/10 rounded-full px-4 shadow-[0_8px_32px_rgba(0,0,0,0.5),0_0_15px_rgba(59,130,246,0.15)] backdrop-blur-[30px] select-none relative overflow-hidden"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
+              >
+                <AnimatePresence mode="wait">
+                  {(micState === 'recording' || micState === 'paused') ? (
+                    <motion.div
+                      key="recording-view"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full h-full flex items-center justify-between"
+                    >
+                      {/* Cancel / X Button */}
+                      <button 
+                        onClick={handleCancelRecording}
+                        className="w-11 h-11 rounded-full bg-white/[0.06] border border-white/10 hover:scale-105 hover:bg-red-500/20 hover:border-red-500/30 text-white/70 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer active:scale-95 shadow-inner"
+                        style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                        title="Discard"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+
+                      {/* Waveform & Details */}
+                      <div className="flex-1 flex items-center justify-between px-3 gap-2">
+                        <OverlayWaveform 
+                          level={liveLevel} 
+                          isPaused={micState === 'paused'} 
+                          isSpeaking={isSpeaking || liveLevel > 0.015} 
+                        />
+                        
+                        <div className="flex flex-col items-start justify-center min-w-[70px]">
+                          <span className="text-[10px] font-bold text-white/90 tracking-wide flex items-center gap-1 select-none">
+                            {micState === 'recording' ? (
+                              <>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isVadSilenced ? 'bg-amber-500' : 'bg-red-500 animate-pulse'}`} />
+                                <span>{isVadSilenced ? 'Silenced' : 'Listening'}</span>
+                              </>
+                            ) : (
+                              <>
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                <span>Paused</span>
+                              </>
+                            )}
+                          </span>
+                          <span className="text-[9px] font-semibold text-white/45 font-mono mt-0.5 select-text">
+                            {formatTimer(duration)}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Pause / Resume Button */}
+                      {micState === 'recording' ? (
+                        <button 
+                          onClick={handlePauseRecording}
+                          className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 border border-blue-400/30 text-white flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(59,130,246,0.3)] hover:shadow-[0_0_18px_rgba(59,130,246,0.5)]"
+                          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                          title="Pause"
+                        >
+                          <Pause className="w-4 h-4 fill-white/20" />
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={handleResumeRecording}
+                          className="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 border border-blue-400/30 text-white flex items-center justify-center transition-all duration-200 cursor-pointer hover:scale-105 active:scale-95 shadow-[0_0_12px_rgba(59,130,246,0.3)] hover:shadow-[0_0_18px_rgba(59,130,246,0.5)]"
+                          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                          title="Resume"
+                        >
+                          <Play className="w-4 h-4 fill-white/20 ml-0.5" />
+                        </button>
+                      )}
+                    </motion.div>
+                  ) : micState === 'processing' ? (
+                    /* Processing State */
+                    <motion.div
+                      key="processing-view"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full h-full flex items-center justify-between px-3"
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <Sparkles className="w-4.5 h-4.5 text-cyan-400 animate-pulse" />
+                        <span className="text-xs font-semibold text-white/90 tracking-wide">Processing...</span>
+                      </div>
+                      <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden relative">
+                        <motion.div 
+                          className="absolute inset-0 bg-gradient-to-r from-blue-500 to-cyan-400 rounded-full"
+                          animate={{ x: ['-100%', '100%'] }}
+                          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                        />
+                      </div>
+                    </motion.div>
+                  ) : micState === 'success' ? (
+                    /* Success State */
+                    <motion.div
+                      key="success-view"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full h-full flex items-center justify-center gap-2.5"
+                    >
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                        className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-white"
+                      >
+                        <Check className="w-3.5 h-3.5 stroke-[3px]" />
+                      </motion.div>
+                      <span className="text-xs font-semibold text-white/90">
+                        ✓ Typed Successfully
+                      </span>
+                    </motion.div>
+                  ) : (
+                    /* Error State */
+                    <motion.div
+                      key="error-view"
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      transition={{ duration: 0.15 }}
+                      className="w-full h-full flex items-center justify-between px-3"
+                    >
+                      <div className="flex items-center gap-2 text-red-400">
+                        <AlertCircle className="w-4.5 h-4.5" />
+                        <span className="text-[10px] font-bold tracking-wide">
+                          {showPermissionError ? 'Mic Permission Denied' : 'Mic Not Found'}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        {showPermissionError ? (
+                          <button 
+                            onClick={handleOpenSystemSettings}
+                            className="px-2 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-bold transition-colors cursor-pointer"
+                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                          >
+                            Settings
+                          </button>
+                        ) : (
+                          <button 
+                            onClick={handleRetryPermission}
+                            className="px-2 py-1 rounded bg-white/10 hover:bg-white/15 text-white text-[9px] font-bold transition-all cursor-pointer"
+                            style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                          >
+                            Retry
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => {
+                            setMicState('idle')
+                            window.api.setOverlayMode(false)
+                            window.api.close()
+                          }}
+                          className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white cursor-pointer"
+                          style={{ WebkitAppRegion: 'no-drag' } as React.CSSProperties}
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
-
-                {/* Main View Container */}
-                <div className="w-full h-full flex flex-col items-center justify-between py-6">
-                  
-                  {/* Top Info Header */}
-                  <div className="flex flex-col items-center gap-3 pt-2 z-30 select-none">
-                    <motion.div
-                      className="relative flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-500/20 via-cyan-400/20 to-purple-500/20 border border-white/10 shadow-lg"
-                      whileHover={{ rotate: 5, scale: 1.05 }}
-                    >
-                      <div className="absolute inset-0.5 rounded-2xl bg-gradient-to-br from-white/10 to-transparent opacity-60" />
-                      <Sparkles className="w-7 h-7 text-blue-300/80" />
-                    </motion.div>
-                    
-                    <div className="text-center">
-                      <h1 className="text-lg font-bold tracking-tight bg-gradient-to-b from-white to-white/70 bg-clip-text text-transparent">
-                        VoiceFloo
-                      </h1>
-                      <p className="text-[9px] text-white/30 font-bold tracking-widest uppercase mt-0.5">
-                        AI Voice Dictation
-                      </p>
-                    </div>
-
-                    <StatusIndicator state={micState} />
-                  </div>
-
-                  {/* Middle Section (Microphone toggle or Waveform recorder) */}
-                  <div className="flex-1 w-full flex flex-col items-center justify-center p-4 z-30">
-                    <AnimatePresence mode="wait">
-                      {micState === 'idle' || micState === 'error' ? (
-                        <motion.div
-                          key="idle-layout"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex flex-col items-center"
-                        >
-                          <FloatingMicButton state={micState} onClick={handleMicClick} />
-                          
-                          <div className="w-full mt-7 min-h-[50px] flex flex-col items-center justify-center text-center px-4">
-                            <p className="text-xs font-semibold text-white/70">
-                              Click microphone to start dictation
-                            </p>
-                            <p className="text-[10px] text-white/30 max-w-[280px] leading-relaxed mt-1.5">
-                              VoiceFloo runs safely in the background. Press <kbd className="px-1 py-0.5 rounded bg-white/10 text-white/50 text-[9px] font-mono border border-white/5">Opt + Space</kbd> to record instantly.
-                            </p>
-                          </div>
-                        </motion.div>
-                      ) : (
-                        <motion.div
-                          key="recording-layout"
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.2 }}
-                          className="flex flex-col items-center space-y-4 w-full max-w-[280px]"
-                        >
-                          {/* Live Volume Waveform */}
-                          <VisualWaveform level={liveLevel} isPaused={micState === 'paused'} />
-
-                          {/* Live Transcription Box */}
-                          <div className="w-full h-24 overflow-y-auto p-3.5 border border-white/5 bg-white/[0.01] rounded-2xl text-left select-text relative">
-                            {liveTranscript ? (
-                              <p className="text-xs text-white/95 leading-relaxed font-medium">
-                                {liveTranscript}
-                              </p>
-                            ) : (
-                              <div className="flex flex-col items-center justify-center h-full text-center text-white/30 space-y-1.5 select-none">
-                                <motion.span
-                                  animate={{ opacity: [0.4, 0.9, 0.4] }}
-                                  transition={{ duration: 1.5, repeat: Infinity }}
-                                  className="text-xs font-semibold tracking-wide"
-                                >
-                                  {isVadSilenced ? 'Auto-paused (Silence detected)' : 'Listening... Speak now'}
-                                </motion.span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Recording status, Timer, and VAD */}
-                          <div className="flex items-center justify-between w-full px-1 text-xs select-none">
-                            <div className="flex items-center gap-2">
-                              <span className={`w-1.5 h-1.5 rounded-full ${micState === 'recording' ? 'bg-red-500 animate-pulse' : 'bg-amber-500'}`} />
-                              <span className="text-[10px] font-bold text-white/50 font-mono select-text">
-                                {formatTimer(duration)}
-                              </span>
-                            </div>
-                            
-                            {/* Confidence / VAD Indicator */}
-                            <div className="text-[8px] font-bold tracking-wider px-2 py-0.5 rounded-full border border-white/5 bg-white/[0.03] uppercase">
-                              {isSpeaking ? (
-                                <span className="text-emerald-400">Speech Active</span>
-                              ) : isVadSilenced ? (
-                                <span className="text-amber-400/80">Silenced</span>
-                              ) : (
-                                <span className="text-white/40">Ready</span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Target window application name */}
-                          {targetWindow && (
-                            <div className="text-[9px] text-white/35 font-bold tracking-wider flex items-center justify-between w-full px-1 bg-white/[0.02] border border-white/5 py-1 px-3.5 rounded-xl uppercase select-none">
-                              <div className="flex items-center gap-1.5">
-                                {inputStrategy === 'clipboard' ? (
-                                  <Clipboard className="w-3.5 h-3.5 text-blue-400" />
-                                ) : (
-                                  <Keyboard className="w-3.5 h-3.5 text-cyan-400" />
-                                )}
-                                <span className="max-w-[100px] truncate">
-                                  To: {targetWindow.executable.replace('.exe', '')}
-                                </span>
-                              </div>
-                              <span className="max-w-[100px] truncate text-[8px] text-white/50 lowercase">Mic: {selectedDeviceLabel}</span>
-                              <span className="text-blue-300 font-semibold">{language} • {activeModelId.toUpperCase()}</span>
-                            </div>
-                          )}
-
-                          {/* Controls bar */}
-                          <div className="flex items-center gap-3.5 pt-1.5">
-                            {/* Cancel / Discard */}
-                            <GlassButton
-                              onClick={handleCancelRecording}
-                              title="Cancel and Discard Recording"
-                              className="w-10 h-10 rounded-full text-white/50 hover:text-red-400 border-red-500/10"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </GlassButton>
-
-                            {/* Pause / Resume toggle */}
-                            {micState === 'recording' ? (
-                              <GlassButton
-                                onClick={handlePauseRecording}
-                                title="Pause Session"
-                                className="px-4.5 h-10 rounded-full text-[10px] font-bold tracking-wider gap-1.5"
-                              >
-                                <Pause className="w-3.5 h-3.5 text-amber-400" />
-                                <span>PAUSE</span>
-                              </GlassButton>
-                            ) : (
-                              <GlassButton
-                                onClick={handleResumeRecording}
-                                title="Resume Session"
-                                className="px-4.5 h-10 rounded-full text-[10px] font-bold tracking-wider gap-1.5"
-                              >
-                                <Play className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>RESUME</span>
-                              </GlassButton>
-                            )}
-
-                            {/* Stop and Save */}
-                            <GlassButton
-                              onClick={handleStopRecording}
-                              title="Finish and Compile Audio Chunks"
-                              className="w-10 h-10 rounded-full bg-blue-600/15 border-blue-500/30 text-blue-300 hover:bg-blue-600/25 hover:text-white"
-                            >
-                              <Check className="w-4.5 h-4.5" />
-                            </GlassButton>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Simulator action triggers */}
-                  {(micState === 'idle' || micState === 'error') && (
-                    <div className="flex items-center gap-2 mb-2 z-30 select-none">
-                      <button 
-                        onClick={() => setShowPermissionError(true)}
-                        className="px-2 py-1 text-[9px] font-bold rounded border border-white/5 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/60 cursor-pointer transition-colors"
-                      >
-                        Simulate Denied Permission
-                      </button>
-                      <button 
-                        onClick={() => setIsWhisperReady(false)}
-                        className="px-2 py-1 text-[9px] font-bold rounded border border-white/5 bg-white/5 hover:bg-white/10 text-white/40 hover:text-white/60 cursor-pointer transition-colors"
-                      >
-                        Trigger Setup Wizard
-                      </button>
-                    </div>
-                  )}
-
-                </div>
-              </div>
-
-              {/* Bottom Toolbar with Settings / History triggers */}
-              <BottomToolbar 
-                onSettingsClick={() => setShowSettings(true)}
-                onHistoryClick={() => setShowHistory(true)}
-                onLanguageChange={(lang) => setLanguage(lang)}
-              />
-              
-            </GlassCard>
-          )}
-        </motion.div>
-      )
-    )}
-  </AnimatePresence>
+              </motion.div>
+            )
+          )
+        )}
+      </AnimatePresence>
     </div>
   )
 }

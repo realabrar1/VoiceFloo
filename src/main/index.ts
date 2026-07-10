@@ -22,9 +22,16 @@ function initApp(): void {
     // Setup native system tray
     trayService.createTray(
       icon,
-      // Left click toggle handler
+      // Left click toggle handler: toggle settings window
       () => {
-        if (windowService) windowService.toggle()
+        if (windowService) {
+          const win = windowService.getWindow()
+          if (win && win.isVisible() && !win.isMinimized() && !windowService.isOverlayModeActive()) {
+            windowService.hide()
+          } else {
+            windowService.openSettings()
+          }
+        }
       },
       // Restart application handler
       () => {

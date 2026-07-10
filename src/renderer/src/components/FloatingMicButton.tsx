@@ -2,7 +2,7 @@ import React from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mic, AlertCircle } from 'lucide-react'
 
-export type MicState = 'idle' | 'recording' | 'processing' | 'error' | 'paused'
+export type MicState = 'idle' | 'recording' | 'processing' | 'error' | 'paused' | 'success'
 
 interface FloatingMicButtonProps {
   state: MicState

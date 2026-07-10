@@ -16,6 +16,8 @@ export const StatusIndicator: React.FC<StatusIndicatorProps> = ({ state }) => {
         return { text: 'Mic Access Error', color: 'bg-amber-500', textColor: 'text-amber-300' }
       case 'paused':
         return { text: 'Recording Paused', color: 'bg-amber-500 animate-pulse', textColor: 'text-amber-300' }
+      case 'success':
+        return { text: 'Typed successfully', color: 'bg-emerald-500 animate-pulse', textColor: 'text-emerald-300' }
       case 'idle':
       default:
         return { text: 'Ready', color: 'bg-emerald-500', textColor: 'text-emerald-300' }

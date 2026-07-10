@@ -14,6 +14,7 @@ export class WindowService {
   private window: BrowserWindow | null = null
   private stateService: WindowStateService
   private registeredShortcut: string | null = null
+  private isOverlay = false
 
   constructor(stateService: WindowStateService) {
     this.stateService = stateService
@@ -22,6 +23,10 @@ export class WindowService {
 
   public getWindow(): BrowserWindow | null {
     return this.window
+  }
+
+  public isOverlayModeActive(): boolean {
+    return this.isOverlay
   }
 
   /**
@@ -53,10 +58,12 @@ export class WindowService {
         }
       })
 
-      // Show when ready, triggering fade-in in renderer
+      // Start minimized in system tray on initial launch
       this.window.on('ready-to-show', () => {
-        logger.info('Window ready-to-show event fired. Triggering show.')
-        this.show()
+        logger.info('Window ready-to-show event fired. Keeping window hidden in tray on startup.')
+        if (this.window) {
+          this.window.webContents.send('window-ready')
+        }
       })
 
       // Track window moves and resizes
@@ -179,11 +186,25 @@ export class WindowService {
     }
   }
 
-  /**
-   * Set settings panel trigger in React.
-   */
   public openSettings(): void {
     if (!this.window) return
+    try {
+      const { screen } = require('electron')
+      const primaryDisplay = screen.getPrimaryDisplay()
+      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+      
+      const width = 480
+      const height = 640
+      const x = Math.floor((screenWidth - width) / 2)
+      const y = Math.floor((screenHeight - height) / 2)
+
+      this.window.setResizable(true)
+      this.window.setMinimumSize(380, 520)
+      this.window.setBounds({ width, height, x, y })
+      this.window.setAlwaysOnTop(false)
+    } catch (err) {
+      logger.error('Failed to set settings bounds', err)
+    }
     this.show()
     this.window.webContents.send('window-open-settings')
     logger.info('Sent settings overlay open command to renderer.')
@@ -241,34 +262,29 @@ export class WindowService {
    */
   public setOverlayMode(isOverlay: boolean): void {
     if (!this.window) return
+    this.isOverlay = isOverlay
 
     if (isOverlay) {
       const { screen } = require('electron')
       const primaryDisplay = screen.getPrimaryDisplay()
       const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
 
-      const overlayWidth = 240
-      const overlayHeight = 65
+      const overlayWidth = 464
+      const overlayHeight = 100
       const x = Math.floor((screenWidth - overlayWidth) / 2)
-      const y = Math.floor(screenHeight - overlayHeight - 40)
+      const y = Math.floor(screenHeight - overlayHeight - 50)
 
       this.window.setResizable(true)
       this.window.setMinimumSize(100, 40) // lower limits temporarily
       this.window.setBounds({ width: overlayWidth, height: overlayHeight, x, y })
       this.window.setAlwaysOnTop(true, 'status')
       this.window.setResizable(false)
+      this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+      this.window.showInactive()
       logger.info('WindowService: Switched to tiny dictation overlay mode.')
     } else {
-      this.window.setResizable(true)
-      this.window.setMinimumSize(380, 520) // restore normal limits
-      this.window.setBounds({
-        width: this.stateService.width,
-        height: this.stateService.height,
-        x: this.stateService.x,
-        y: this.stateService.y
-      })
-      this.window.setAlwaysOnTop(true)
-      logger.info('WindowService: Restored normal layout bounds.')
+      this.window.hide()
+      logger.info('WindowService: Hidden to system tray.')
     }
   }
 
