@@ -68,11 +68,11 @@ export class WindowService {
 
       // Track window moves and resizes
       this.window.on('move', () => {
-        if (this.window) this.stateService.saveState(this.window)
+        if (this.window && !this.isOverlay) this.stateService.saveState(this.window)
       })
 
       this.window.on('resize', () => {
-        if (this.window) this.stateService.saveState(this.window)
+        if (this.window && !this.isOverlay) this.stateService.saveState(this.window)
       })
 
       // Skip taskbar when minimized
@@ -190,18 +190,20 @@ export class WindowService {
     if (!this.window) return
     try {
       const { screen } = require('electron')
-      const primaryDisplay = screen.getPrimaryDisplay()
-      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+      const cursorPoint = screen.getCursorScreenPoint()
+      const display = screen.getDisplayNearestPoint(cursorPoint)
+      const { x: displayX, y: displayY, width: displayWidth, height: displayHeight } = display.workArea
       
       const width = 480
       const height = 640
-      const x = Math.floor((screenWidth - width) / 2)
-      const y = Math.floor((screenHeight - height) / 2)
+      const x = Math.floor(displayX + (displayWidth - width) / 2)
+      const y = Math.floor(displayY + (displayHeight - height) / 2)
 
       this.window.setResizable(true)
       this.window.setMinimumSize(380, 520)
       this.window.setBounds({ width, height, x, y })
       this.window.setAlwaysOnTop(false)
+      this.window.setSkipTaskbar(false)
     } catch (err) {
       logger.error('Failed to set settings bounds', err)
     }
@@ -266,22 +268,24 @@ export class WindowService {
 
     if (isOverlay) {
       const { screen } = require('electron')
-      const primaryDisplay = screen.getPrimaryDisplay()
-      const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize
+      const cursorPoint = screen.getCursorScreenPoint()
+      const display = screen.getDisplayNearestPoint(cursorPoint)
+      const { x: displayX, y: displayY, width: displayWidth, height: displayHeight } = display.workArea
 
-      const overlayWidth = 464
-      const overlayHeight = 100
-      const x = Math.floor((screenWidth - overlayWidth) / 2)
-      const y = Math.floor(screenHeight - overlayHeight - 50)
+      const overlayWidth = 440
+      const overlayHeight = 76
+      const x = Math.floor(displayX + (displayWidth - overlayWidth) / 2)
+      const y = Math.floor(displayY + displayHeight - overlayHeight - 60)
 
       this.window.setResizable(true)
-      this.window.setMinimumSize(100, 40) // lower limits temporarily
+      this.window.setMinimumSize(10, 10)
       this.window.setBounds({ width: overlayWidth, height: overlayHeight, x, y })
       this.window.setAlwaysOnTop(true, 'status')
       this.window.setResizable(false)
       this.window.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true })
+      this.window.setSkipTaskbar(true)
       this.window.showInactive()
-      logger.info('WindowService: Switched to tiny dictation overlay mode.')
+      logger.info('WindowService: Switched to floating dictation overlay mode.')
     } else {
       this.window.hide()
       logger.info('WindowService: Hidden to system tray.')
